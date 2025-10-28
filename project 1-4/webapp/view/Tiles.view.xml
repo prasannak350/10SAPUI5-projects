@@ -1,0 +1,14 @@
+<mvc:View controllerName="com.sap.project1tiles.controller.Tiles"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m" xmlns:l="sap.ui.layout">
+    <Page id="tiles" showHeader="false">
+        <l:VerticalLayout >
+            <l:HorizontalLayout content="{tiles>/}" allowWrapping="true">
+            <!-- learnt something new about press event -->
+                <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="{tiles>title}" press="onPress(${tiles>route})">
+                
+                </GenericTile>
+            </l:HorizontalLayout>
+        </l:VerticalLayout>
+    </Page>
+</mvc:View>

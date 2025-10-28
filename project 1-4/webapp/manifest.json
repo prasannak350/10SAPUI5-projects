@@ -1,0 +1,169 @@
+{
+  "_version": "1.76.0",
+  "sap.app": {
+    "id": "com.sap.project1tiles",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:basic",
+      "version": "1.18.7",
+      "toolsId": "c0d471ef-1fa2-4972-8b09-e5d509c8e41c"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "/northwind/northwind.svc/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "localUri": "localService/mainService/metadata.xml",
+          "odataVersion": "2.0"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": false,
+    "dependencies": {
+      "minUI5Version": "1.140.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "com.sap.project1tiles.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {}
+      }
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "controlAggregation": "pages",
+        "controlId": "app",
+        "transition": "slide",
+        "type": "View",
+        "viewType": "XML",
+        "path": "com.sap.project1tiles.view",
+        "async": true,
+        "viewPath": "com.sap.project1tiles.view"
+      },
+      "routes": [
+        {
+          "name": "RouteView1",
+          "pattern": ":?query:",
+          "target": [
+            "TargetView1"
+          ]
+        },
+        {
+          "name": "first",
+          "pattern": "first",
+          "target": [
+            "Countdown"
+          ]
+        },
+        {
+          "name": "second",
+          "pattern": "second",
+          "target": [
+            "Covid"
+          ]
+        },
+        {
+          "name": "second-list",
+          "pattern": "second-list",
+          "target": [
+            "Covid-List"
+          ]
+        },
+        {
+          "name": "second-pie",
+          "pattern": "second-pie",
+          "target": [
+            "Covid-Pie"
+          ]
+        },
+        {
+          "name": "third",
+          "pattern": "third",
+          "target": [
+            "Vacc"
+          ]
+        }
+      ],
+      "targets": {
+        "TargetView1": {
+          "id": "Tiles",
+          "name": "Tiles"
+        },
+        "Countdown": {
+          "id": "countdown.Countdown",
+          "name": "countdown.Countdown"
+        },
+        "Covid": {
+          "id": "covid.Covid",
+          "name": "covid.Covid"
+        },
+        "Covid-List": {
+          "id": "covid.List",
+          "name": "covid.List"
+        },
+         "Covid-Pie": {
+          "id": "covid.Pie",
+          "name": "covid.Pie"
+        },
+         "Vacc": {
+          "id": "vacc.Vacc",
+          "name": "vacc.Vacc"
+        }
+      }
+    },
+    "rootView": {
+      "viewName": "com.sap.project1tiles.view.App",
+      "type": "XML",
+      "id": "App",
+      "async": true
+    }
+  }
+}
