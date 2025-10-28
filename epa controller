@@ -1,0 +1,1357 @@
+sap.ui.define([
+	"sap/ui/core/mvc/Controller",
+	"sap/ui/model/json/JSONModel",
+	"sap/m/MessageToast",
+	"sap/ui/model/Filter",
+	"sap/ui/model/FilterOperator",
+	"sap/m/Token",
+	"sap/com/main/model/formatter",
+	"sap/m/MessageBox",
+	"sap/ui/core/util/Export",
+	"sap/ui/core/util/ExportTypeCSV",
+	"sap/ui/export/Spreadsheet",
+	"sap/m/UploadCollectionParameter",
+	"sap/ui/export/library",
+	"sap/ui/core/Fragment"
+
+], function (Controller, JSONModel, MessageToast, Filter, FilterOperator, Token, formatter, MessageBox, Export, ExportTypeCSV,
+	Spreadsheet, UploadCollectionParameter, exportLibrary, Fragment) {
+	"use strict";
+	var EdmType = exportLibrary.EdmType;
+	return Controller.extend("sap.com.main.controller.EPA", {
+		formatter: formatter,
+		onInit: function () {
+			this.flagValue = 0;
+			this.getOwnerComponent().getModel().setSizeLimit("300");
+			this.authSet();
+			this.i18nResourceBundle = this.getOwnerComponent().getModel("i18n").getResourceBundle();
+
+			//oViewModel for visible property
+			var oViewModel = new sap.ui.model.json.JSONModel({
+				bSupplierVisible: true,
+				bCountryTextColumn: false
+			});
+			this.getView().setModel(oViewModel, "visibleProperty");
+
+			var newModel = new sap.ui.model.json.JSONModel({});
+			this.getView().setModel(newModel, "itemsData");
+
+			// this.oDataModel = new sap.ui.model.odata.v2.ODataModel("/sap/opu/odata/sap/ZOD_TSCA_SRV/");
+			this.oDataModel = this.getOwnerComponent().getModel();
+
+			this._oRouter = this.getOwnerComponent().getRouter();
+			this._oRouter.getRoute("EPA").attachMatched(this._onRouteMatched,
+				this);
+
+			var sParameter = "X";
+			var SPath = "/AppParametersSet('" + sParameter + "')";
+			this.oDataModel.read(SPath, {
+				success: function (oData, oResponse) {
+					this.getView().getModel("appParametersSet").setData(oData);
+				}.bind(this),
+				error: function (error) {
+					MessageToast.show("Error");
+				}
+			});
+
+		},
+		authSet: function () {
+			this.oDataModel = this.getOwnerComponent().getModel();
+			var oAuthModel = new sap.ui.model.json.JSONModel({
+				isTSCAListVisible: false,
+				isTSCACertVisible: false
+			});
+			this.getView().setModel(oAuthModel, "authModel");
+
+			var sChar = "X";
+			var sPath = "/AuthActivitySet('" + sChar + "')";
+			this.oDataModel.read(sPath, {
+				success: function (oData, oResponse) {
+
+					if (oData.TscaList === "0" && oData.TscaCert === "0") {
+						var oErrRouter = sap.ui.core.UIComponent.getRouterFor(this);
+						oErrRouter.navTo("ErrorPage");
+						return false;
+					}
+					var TSCALIST = oData.TscaList;
+					switch (TSCALIST) {
+					case "0":
+						// this.getView().getModel("authModel").setProperty("/isTSCAListVisible", false);
+						this.getView().byId("idTscaDataTab").setVisible(false);
+						break;
+					case "1":
+						this.getView().byId("idIconTabBarEPA").setVisible(true);
+						this.getView().byId("idTscaDataTab").setVisible(true);
+						this.getView().byId("idTscaDataSmartTable").rebindTable();
+
+						break;
+					case "2":
+						this.getView().byId("idIconTabBarEPA").setVisible(true);
+						this.getView().byId("idTscaDataTab").setVisible(true);
+						this.getView().byId("idTscaDataSmartTable").rebindTable();
+						this.getView().byId("idCreateButton").setEnabled(false);
+						this.getOwnerComponent().getModel("controlProperty").setProperty("/isEditButton", false);
+						this.getOwnerComponent().getModel("controlProperty").setProperty("/isMenuMassUpload", false);
+						break;
+					}
+					var TSCACERT = oData.TscaCert;
+					switch (TSCACERT) {
+					case "0":
+						this.getView().byId("idTscaCerttTab").setVisible(false);
+						break;
+					case "1":
+						this.getView().byId("idIconTabBarEPA").setVisible(true);
+						this.getView().byId("idTscaCerttTab").setVisible(true);
+						break;
+					case "2":
+						this.getView().byId("idIconTabBarEPA").setVisible(true);
+						this.getView().byId("idTscaCerttTab").setVisible(true);
+						this.getView().byId("idTscaGenerateButton").setEnabled(false);
+						break;
+					}
+					this.getView().getModel("authModel").setData(oData);
+				}.bind(this),
+				error: function (error) {
+					MessageToast.show("Error");
+					var oErrRouter = sap.ui.core.UIComponent.getRouterFor(this);
+					oErrRouter.navTo("ErrorPage");
+				}
+			});
+		},
+		_onRouteMatched: function () {
+			this.getView().getModel("supplier").setData(null);
+			var aFilter = [];
+			var oTable = this.getView().byId("idProjectTable");
+			if (oTable.getBinding("rows")) {
+				oTable.bindRows({
+					path: "/TscaListSet",
+					parameters: {
+						'operationMode': 'Server'
+					},
+					filters: aFilter
+				});
+			}
+			//To  clear smart table p13n filters & sorters
+			var oSmartTable = this.getView().byId("idTscaDataSmartTable");
+			oSmartTable.applyVariant({});
+
+			var oTscaCertSmartTable = this.getView().byId("idTscaCertificateSearchSmartTable");
+			oTscaCertSmartTable.applyVariant({});
+		},
+		displayFormat: function (date) {
+			if (date) {
+				var oDateFormats = sap.ui.core.format.DateFormat.getDateInstance({
+					pattern: "MM/dd/yyyy",
+					UTC: true
+				});
+				return oDateFormats.format(date);
+			}
+		},
+		onFilter: function (oEvent) {
+			var oQuery = oEvent.getParameter("query"); // get live changes
+			if (!oQuery) {
+				oQuery = oEvent.getParameter("newValue"); // get list data using ref
+			}
+			var oListData = this.getView().byId("idTscaDataSmartTable").getTable();
+			if(oQuery.length>=2){
+			var aFilter = [],
+				oFilter = [];
+			aFilter.push(new Filter('Supplier', FilterOperator.Contains, oQuery.toUpperCase()));
+			if(oQuery.length>=2 && oQuery.length<=3){
+			aFilter.push(new Filter('Country', FilterOperator.Contains, oQuery.toUpperCase()));
+			}
+			aFilter.push(new Filter('Product', FilterOperator.Contains, oQuery.toUpperCase()));
+			aFilter.push(new Filter('LogGrp', FilterOperator.Contains, oQuery.toUpperCase()));
+			aFilter.push(new Filter('Manufacturer', FilterOperator.Contains, oQuery.toUpperCase()));
+			aFilter.push(new Filter('TscaId', FilterOperator.Contains, oQuery.toUpperCase()));
+			oFilter.push(new Filter(aFilter, false));
+			oListData.getBinding("rows").filter(oFilter);
+			}
+			if(oQuery.length == 0){
+			oListData.getBinding("rows").filter([]);
+			}
+			
+		},
+		onDownloadTable: function (oEvt) {
+			var oSmartTable = this.getView().byId("idProjectTable");
+			var sUrl = oSmartTable.getBinding("rows").getDownloadUrl();
+			var oHeaders = oSmartTable.getBinding("rows").getModel().getHeaders();
+			var aCols = [],
+				oRowBinding, oSettings, oSheet, oTable;
+			if ((oSmartTable.getBinding("rows").getLength()) == 0) {
+				MessageToast.show(this.i18nResourceBundle.getText("noRowsDefined"));
+				return false;
+			}
+			let type = "String";
+			if (oSmartTable != undefined) {
+				let aColumns = oSmartTable.getColumns();
+				if (aColumns != undefined && aColumns.length > 0) {
+					for (var index = 0; index < aColumns.length; index++) {
+						if (aColumns[index].getVisible()) {
+
+							if (aColumns[index].getLabel().getText() === "Deleted") {
+								let oSettingColumnProperty = {
+									label: aColumns[index].getLabel().getText(),
+									property: aColumns[index].getTemplate().mBindingInfos.selected.parts[0].path,
+									width: aColumns[index].getWidth()
+								}
+								aCols.push(oSettingColumnProperty);
+
+							} else if (aColumns[index].getLabel().getText() == "Date Issued" || aColumns[index].getLabel().getText() == "Created On" ||
+								aColumns[index].getLabel().getText() == "Changed On") {
+								// debugger;
+								var oType = "Date";
+								// var	aColumns[index].getTemplate().mBindingInfos.text.parts[0].formatOptions="MM/dd/YYYY";
+								let oSettingColumnProperty = {
+									label: aColumns[index].getLabel().getText(),
+									property: aColumns[index].getTemplate().mBindingInfos.text.parts[0].path,
+									width: aColumns[index].getWidth(),
+									type: sap.ui.export.EdmType.Date,
+									format: "mm/dd/yyyy"
+								}
+								aCols.push(oSettingColumnProperty);
+							} else {
+								let oSettingColumnProperty = {
+									label: aColumns[index].getLabel().getText(),
+									property: aColumns[index].getTemplate().mBindingInfos.text.parts[0].path,
+									width: aColumns[index].getWidth()
+								}
+								aCols.push(oSettingColumnProperty);
+							}
+						}
+					}
+				}
+				if (aCols.length == 0) {
+					MessageToast.show(this.i18nResourceBundle.getText("noColumnsDefined"));
+					return false;
+				}
+			} else {
+				MessageToast.show(this.i18nResourceBundle.getText("exportErrorMsg"));
+			}
+			oSettings = {
+				workbook: {
+					columns: aCols
+				},
+				// dataSource: oSmartTable.getBinding("rows").getModel().getData(),
+				// count: 1000,
+				dataSource: {
+					type: "odata",
+					useBatch: true,
+					dataUrl: sUrl,
+					serviceUrl: "/sap/opu/odata/sap/ZOD_TSCA_SRV",
+					headers: oHeaders,
+					count: 5000
+						//usually count was around 2000, to check the buffer made it to 5000
+				},
+				fileName: 'Export.xlsx',
+				showProgress: true,
+				worker: false
+			};
+
+			oSheet = new Spreadsheet(oSettings);
+			oSheet.build().finally(function () {
+				oSheet.destroy();
+			});
+		},
+		onBeforeExport: function (oEvt) {
+			var mExcelSettings = oEvt.getParameter("exportSettings");
+			if (mExcelSettings.url) {
+				return;
+			}
+			mExcelSettings.worker = false;
+		},
+		handleAdvanceSearchlink: function (oEvent) {
+			// this.getView().byId("idAdvSearchAppleNumber")._getValueHelpIcon().setSrc(null);
+			// this.getView().byId("idAdvSearchSupplierNumber")._getValueHelpIcon().setSrc(null);
+			// this.getView().byId("idAdvSearchManuNumber")._getValueHelpIcon().setSrc(null);
+			var oPanel = this.getView().byId("idAdvancedSearchPanel");
+			if (oPanel.getVisible()) {
+				oPanel.setVisible(false);
+				this.getView().byId("idicon").setSrc("sap-icon://expand-group");
+			} else {
+				oPanel.setVisible(true);
+				this.getView().byId("idicon").setSrc("sap-icon://collapse-group");
+				this.getView().byId("idAdvSearchAppleNumber").setValue("");
+				this.getView().byId("idAdvSearchSupplierNumber").setValue("");
+				this.getView().byId("idAdvSearchManuNumber").setValue("");
+				this.getView().byId("idAdvSearchAppleNumber").setShowValueHelp(false);
+				this.getView().byId("idAdvSearchSupplierNumber").setShowValueHelp(false);
+				this.getView().byId("idAdvSearchManuNumber").setShowValueHelp(false);
+			}
+			// Date
+			var sDataRange = this.getView().getModel("appParametersSet").getData().DatePeriod;
+			var date = new Date();
+			var utcDate = new Date(date.toUTCString());
+			utcDate.setTime(utcDate.getTime() - 13.5 * 60 * 60 * 1000);
+			var usDate = new Date(utcDate);
+			var aPrevious = new Date(usDate.toUTCString());
+			aPrevious.setTime(aPrevious.getTime() - sDataRange * 24 * 60 * 60 * 1000);
+			var oPreviousDate = new Date(aPrevious);
+
+			var oModel = new JSONModel({
+				"dTodayDate": usDate,
+				"dBackDate": oPreviousDate,
+				"bTodayDate": usDate,
+				"bBackDate": oPreviousDate
+			});
+			this.getView().setModel(oModel, "view");
+			this.getView().getModel("view").sDefaultBindingMode = "OneWay";
+		},
+		handleAdvanceSearchlinkCert: function (oEvent) {
+			// this.getView().byId("idTscaCertAdvSearchRefNumber")._getValueHelpIcon().setSrc(null);
+			// this.getView().byId("idTscaCertAdvSearchRefPrdct")._getValueHelpIcon().setSrc(null);
+			// this.getView().byId("idTscaCertAdvSearchSupplier")._getValueHelpIcon().setSrc(null);
+			var oPanel = this.getView().byId("idTscaCertAdvancedSearchPanel");
+			if (oPanel.getVisible()) {
+				oPanel.setVisible(false);
+				this.getView().byId("idiconCert").setSrc("sap-icon://expand-group");
+			} else {
+				oPanel.setVisible(true);
+				this.getView().byId("idiconCert").setSrc("sap-icon://collapse-group");
+				this.getView().byId("idTscaCertAdvSearchRefNumber").setValue(""); //
+				this.getView().byId("idTscaCertAdvSearchRefType").setValue(""); //
+				this.getView().byId("idTscaCertAdvSearchRefPrdct").setValue(""); //
+				this.getView().byId("idTscaCertAdvSearchSupplier").setValue("");
+				this.getView().byId("idTscaCertAdvSearchRefNumber").setShowValueHelp(false);
+				this.getView().byId("idTscaCertAdvSearchRefPrdct").setShowValueHelp(false);
+				this.getView().byId("idTscaCertAdvSearchSupplier").setShowValueHelp(false);
+			}
+
+			var sDataRange = this.getView().getModel("appParametersSet").getData().DatePeriod;
+			var date = new Date();
+			var utcDate = new Date(date.toUTCString());
+			utcDate.setTime(utcDate.getTime() - 13.5 * 60 * 60 * 1000);
+			var usDate = new Date(utcDate);
+			var aPrevious = new Date(usDate.toUTCString());
+			aPrevious.setTime(aPrevious.getTime() - sDataRange * 24 * 60 * 60 * 1000);
+			var oPreviousDate = new Date(aPrevious);
+
+			var oModel = new JSONModel({
+				"dTodayDate": usDate,
+				"dBackDate": oPreviousDate
+			});
+			this.getView().setModel(oModel, "view2");
+			this.getView().getModel("view2").sDefaultBindingMode = "OneWay";
+
+		},
+		onAdvancedSearch: function () {
+			var sAppPartNo = this.getView().byId("idAdvSearchAppleNumber").getValue().toUpperCase();
+			var sSupplier = this.getView().byId("idAdvSearchSupplierNumber").getValue().toUpperCase();
+			var sManufacturer = this.getView().byId("idAdvSearchManuNumber").getValue().toUpperCase();
+			var sFromDate = this.getView().byId("idCreatedonFrom").getValue();
+			var sToDate = this.getView().byId("idCreatedonTo").getValue();
+			if (sFromDate === "" || sToDate === "") {
+				MessageToast.show(this.i18nResourceBundle.getText("createDateMandatory"));
+				return false;
+			}
+			if (sFromDate !== "" && sToDate === "" || sFromDate === "" && sToDate !== "") {
+				MessageToast.show(this.i18nResourceBundle.getText("selectBothDates"));
+				return false;
+			}
+			if (sFromDate > sToDate) {
+				MessageToast.show(this.i18nResourceBundle.getText("invalidDateRange"));
+				return false;
+			}
+			var startDate = this.getView().byId("idCreatedonFrom").getDateValue();
+			var endDate = this.getView().byId("idCreatedonTo").getDateValue();
+			if (startDate !== null && endDate !== null) {
+				var diff = Math.abs(Date.parse(sFromDate) - Date.parse(sToDate));
+				var diffD = Math.ceil(diff / (1000 * 60 * 60 * 24));
+				if (diffD > 30) {
+					MessageToast.show(this.i18nResourceBundle.getText("dateRangeExceed"));
+					return false;
+				}
+			}
+
+			var sFromChngDate = this.getView().byId("idChangedonFrom").getValue();
+			var sFromChngTo = this.getView().byId("idChangedonTo").getValue();
+			if (sFromChngDate !== "" && sFromChngTo === "" || sFromChngDate === "" && sFromChngTo !== "") {
+				MessageToast.show(this.i18nResourceBundle.getText("selectBothDates"));
+				return false;
+			}
+			if (sFromChngDate > sFromChngTo) {
+				MessageToast.show(this.i18nResourceBundle.getText("invalidDateRange"));
+				return false;
+			}
+			var startDate2 = this.getView().byId("idChangedonFrom").getDateValue();
+			var endDate2 = this.getView().byId("idChangedonTo").getDateValue();
+			if (startDate2 !== null && endDate2 !== null) {
+				var diff2 = Math.abs(Date.parse(sFromChngDate) - Date.parse(sFromChngTo));
+				var diffD2 = Math.ceil(diff2 / (1000 * 60 * 60 * 24));
+				if (diffD2 > 30) {
+					MessageToast.show(this.i18nResourceBundle.getText("dateRangeExceed"));
+					return false;
+				}
+			}
+			var oListData = this.getView().byId("idTscaDataSmartTable");
+			var aFilter = [];
+			if (sAppPartNo !== "") {
+				var oAppPartNo = new Filter("Product", FilterOperator.Contains, sAppPartNo);
+				if (sAppPartNo && sAppPartNo.length === 40) {
+					oAppPartNo = new Filter("Product", FilterOperator.EQ, sAppPartNo);
+				}
+				aFilter.push(oAppPartNo);
+			}
+			if (sSupplier !== "") {
+				var oSupplier = new Filter("Supplier", FilterOperator.Contains, sSupplier);
+				if (sSupplier && sSupplier.length === 40) {
+					oSupplier = new Filter("Supplier", FilterOperator.EQ, sSupplier);
+				}
+				aFilter.push(oSupplier);
+			}
+			if (sManufacturer !== "") {
+				var oManufacturer = new Filter("Manufacturer", FilterOperator.Contains, sManufacturer);
+				if (sManufacturer && sManufacturer.length === 10) {
+					oManufacturer = new Filter("Manufacturer", FilterOperator.EQ, sManufacturer);
+				}
+				aFilter.push(oManufacturer);
+			}
+			if (sFromDate !== "" || sToDate !== "") {
+				var oDate = new Filter("CreateDt", FilterOperator.BT, sFromDate, sToDate);
+				aFilter.push(oDate);
+			}
+			if (sFromChngDate !== "" || sFromChngTo !== "") {
+				var oChngDate = new Filter("ChangeDt", FilterOperator.BT, sFromChngDate, sFromChngTo);
+				aFilter.push(oChngDate);
+			}
+			var oFilter = new Filter({ // Working with multiple filters
+				filters: aFilter,
+				and: true
+					// or: true
+			});
+			oListData.getTable().bindRows({
+				path: "/TscaListSet",
+				parameters: {
+					'operationMode': 'Server'
+				},
+				filters: oFilter
+			});
+		},
+
+		onTscaReset: function () {
+			this.getView().byId("idAdvSearchAppleNumber").setValue(""); //
+			this.getView().byId("idAdvSearchSupplierNumber").setValue(""); //
+			this.getView().byId("idAdvSearchManuNumber").setValue(""); //
+			this.getView().byId("idAdvSearchAppleNumber").setShowValueHelp(false);
+			this.getView().byId("idAdvSearchSupplierNumber").setShowValueHelp(false);
+			this.getView().byId("idAdvSearchManuNumber").setShowValueHelp(false);
+			var sDataRange = this.getView().getModel("appParametersSet").getData().DatePeriod;
+			var date = new Date();
+			var utcDate = new Date(date.toUTCString());
+			utcDate.setTime(utcDate.getTime() - 13.5 * 60 * 60 * 1000);
+			var usDate = new Date(utcDate);
+			var aPrevious = new Date(usDate.toUTCString());
+			aPrevious.setTime(aPrevious.getTime() - sDataRange * 24 * 60 * 60 * 1000);
+			var oPreviousDate = new Date(aPrevious);
+
+			var oModel = new JSONModel({
+				"dTodayDate": usDate,
+				"dBackDate": oPreviousDate,
+				"bTodayDate": usDate,
+				"bBackDate": oPreviousDate
+			});
+
+			this.getView().setModel(oModel, "view");
+			this.getView().getModel("view").sDefaultBindingMode = "OneWay";
+
+			var sDateFrm = this.getView().getModel("view").getProperty("/dBackDate");
+			var bDateFrm = this.getView().getModel("view").getProperty("/bBackDate");
+			var sDateTo = this.getView().getModel("view").getProperty("/dTodayDate");
+			var bDateTo = this.getView().getModel("view").getProperty("/bTodayDate");
+			this.getView().byId("idCreatedonFrom").setDateValue(sDateFrm);
+			this.getView().byId("idCreatedonTo").setDateValue(sDateTo);
+			this.getView().byId("idChangedonFrom").setDateValue(bDateFrm);
+			this.getView().byId("idChangedonTo").setDateValue(bDateTo);
+			var oListData = this.getView().byId("idTscaDataSmartTable");
+			var oFilter = [];
+			oListData.getTable().bindRows({
+				path: "/TscaListSet",
+				parameters: {
+					'operationMode': 'Server'
+				},
+				filters: oFilter
+			});
+		},
+		onTscaCertReset: function () {
+			this.getView().byId("idTscaCertAdvSearchRefNumber").setSelectedKey(""); //
+			this.getView().byId("idTscaCertAdvSearchRefType").setSelectedKey(""); //
+			this.getView().byId("idTscaCertAdvSearchRefPrdct").setValue(""); //
+			this.getView().byId("idTscaCertAdvSearchSupplier").setValue("");
+			this.getView().byId("idTscaCertAdvSearchRefNumber").setShowValueHelp(false);
+			this.getView().byId("idTscaCertAdvSearchRefPrdct").setShowValueHelp(false);
+			this.getView().byId("idTscaCertAdvSearchSupplier").setShowValueHelp(false);
+			var sDataRange = this.getView().getModel("appParametersSet").getData().DatePeriod;
+			var date = new Date();
+			var utcDate = new Date(date.toUTCString());
+			utcDate.setTime(utcDate.getTime() - 13.5 * 60 * 60 * 1000);
+			var usDate = new Date(utcDate);
+			var aPrevious = new Date(usDate.toUTCString());
+			aPrevious.setTime(aPrevious.getTime() - sDataRange * 24 * 60 * 60 * 1000);
+			var oPreviousDate = new Date(aPrevious);
+
+			var oModel = new JSONModel({
+				"dTodayDate": usDate,
+				"dBackDate": oPreviousDate
+			});
+
+			this.getView().setModel(oModel, "view2");
+			this.getView().getModel("view2").sDefaultBindingMode = "OneWay";
+
+			var sDateFrm = this.getView().getModel("view2").getProperty("/dBackDate");
+			var sDateTo = this.getView().getModel("view2").getProperty("/dTodayDate");
+			this.getView().byId("idTscaCertCreatedonFrom").setDateValue(sDateFrm);
+			this.getView().byId("idTscaCertCreatedonTo").setDateValue(sDateTo);
+
+			var oTCSmartTable = this.getView().byId("idTscaCertificateSearchSmartTable");
+			var oPanel = this.getView().byId("idDetailPanel").getVisible();
+			if (oPanel === true) {
+				this.getView().byId("idDetailPanel").setVisible(false);
+			}
+			this.getView().byId("idTscaCertificateSearchTable").setVisibleRowCount(10);
+			oTCSmartTable.getTable().bindRows({
+				path: "/TscaCertificatesSet",
+				parameters: {
+					'operationMode': 'Server'
+				},
+				filters: []
+			});
+		},
+		onRefresh: function () {
+			this.getView().byId("searchFieldTscaData").setValue(""); //To clear search field input
+			this.getView().byId("idAdvSearchAppleNumber").setValue(""); //
+			this.getView().byId("idAdvSearchSupplierNumber").setValue(""); //
+			this.getView().byId("idAdvSearchManuNumber").setValue(""); //
+			var oListData = this.getView().byId("idTscaDataSmartTable");
+			var oFilter = [];
+			oListData.getTable().bindRows({
+				path: "/TscaListSet",
+				parameters: {
+					'operationMode': 'Server'
+				},
+				filters: oFilter
+			});
+		},
+		onCreateNewEpa: function () {
+			var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+			oRouter.navTo("CreateEPA");
+		},
+		onMassUpload: function (evt) {
+			if (!this.massUpload) {
+				this.massUpload = sap.ui.xmlfragment("idMassUpload", "sap.com.main.fragments.MassUpload", this); //MassUpload- Fragment Name
+				this.getView().addDependent(this.massUpload);
+			}
+			this.massUpload.open();
+		},
+		onCloseUpload: function () {
+			this.massUpload.close();
+			sap.ui.core.Fragment.byId("idMassUpload", "fileUpload").clear();
+		},
+		onLogPressTsca: function () {
+			var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+			oRouter.navTo("LogManufacturer");
+		},
+		onOpenTscaDetailsFragment: function () {
+			if (!this._oDialog) {
+				this._oDialog = sap.ui.xmlfragment("idTscaDetails", "sap.com.main.fragments.TSCADetails", this); //TSCADetails- Fragment Name
+				this.getView().addDependent(this._oDialog);
+			}
+			sap.ui.core.Fragment.byId("idTscaDetails", "idNextButton").setEnabled(true);
+			this.aIndicesData = [];
+			this._oDialog.open();
+		},
+
+		onCloseTscaDetailsFragment: function () {
+			this._oDialog.close(); //this will close the fragment
+			sap.ui.core.Fragment.byId("idTscaDetails", "idSearchTermField").setValue("");
+			sap.ui.core.Fragment.byId("idTscaDetails", "idInputReferenceNumber").setValue("");
+			sap.ui.core.Fragment.byId("idTscaDetails", "idSelectReferenceType").setSelectedKey("");
+
+			sap.ui.core.Fragment.byId("idTscaDetails", "idInputShipperName").setValue("");
+			sap.ui.core.Fragment.byId("idTscaDetails", "idInputCountryOfExp").setSelectedKey("");
+			sap.ui.core.Fragment.byId("idTscaDetails", "panelTscaDetailTable").setVisible(false);
+			this.getView().byId("idTscaCertificateSearchTable").getBinding("rows").filter([]);
+		},
+		onNext: function (oEvent) {
+			var sReference = sap.ui.core.Fragment.byId("idTscaDetails", "idInputReferenceNumber").getValue();
+			var sRefType = sap.ui.core.Fragment.byId("idTscaDetails", "idSelectReferenceType").getSelectedKey();
+			var sShipperName = sap.ui.core.Fragment.byId("idTscaDetails", "idInputShipperName").getValue();
+			var sCountryOfExp = sap.ui.core.Fragment.byId("idTscaDetails", "idInputCountryOfExp").getSelectedKey();
+
+			if (sShipperName === "") {
+				MessageToast.show(this.i18nResourceBundle.getText("enterShipperName"));
+				enterShipperName
+				return false;
+			}
+			if (sCountryOfExp === "") {
+				MessageToast.show(this.i18nResourceBundle.getText("enterCountryOfExport"));
+				return false;
+			}
+			if (sRefType === "") {
+				MessageToast.show(this.i18nResourceBundle.getText("selectReferenceType"));
+				return false;
+			}
+			if (sReference === "") {
+				MessageToast.show(this.i18nResourceBundle.getText("enterReferenceNumber"));
+				return false;
+			}
+			var oPanel = sap.ui.core.Fragment.byId("idTscaDetails", "panelTscaDetailTable").getVisible();
+			if (oPanel == false) {
+				this.onAdvSearchTscaDetails();
+				return false;
+			}
+			if (this.aIndicesData.length === 0) {
+				MessageToast.show(this.i18nResourceBundle.getText("selectRowMsg"));
+				return false;
+			}
+			sap.ui.core.Fragment.byId("idTscaDetails", "idNextButton").setEnabled(false);
+			sap.ui.core.BusyIndicator.show();
+			var aAr = [];
+			var sSelectedData = this.aIndicesData;
+			for (var i = 0; i < this.aIndicesData.length; i++) {
+				var oObject = sSelectedData[i];
+				oObject.index = "" + ((i + 1) * 10);
+				aAr.push(oObject);
+			}
+			this.getOwnerComponent().getModel("selectedRows").setData(aAr);
+			this.onOpenTscaCertificateFragment();
+		},
+
+		onOpenTscaCertificateFragment: function () {
+			if (!this._aDialog) {
+				this._aDialog = sap.ui.xmlfragment("idTscaCertificate", "sap.com.main.fragments.TSCACertificate", this); //TSCACertificate-Fragment Name
+				this.getView().addDependent(this._aDialog);
+			}
+			sap.ui.core.BusyIndicator.hide();
+
+			this._aDialog.open();
+			var sCurrentDate = new Date();
+			sap.ui.core.Fragment.byId("idTscaCertificate", "idTextDate").setText(sCurrentDate.toLocaleDateString());
+			var sShipperName = sap.ui.core.Fragment.byId("idTscaDetails", "idInputShipperName").getValue();
+			var sReference = sap.ui.core.Fragment.byId("idTscaDetails", "idInputReferenceNumber").getValue();
+			// var sRefType = sap.ui.core.Fragment.byId("idTscaDetails", "idSelectReferenceType").getValue();S
+			var sRefType = sap.ui.core.Fragment.byId("idTscaDetails", "idSelectReferenceType").getSelectedItem().getBindingContext().getObject()
+				.text;
+
+			sap.ui.core.Fragment.byId("idTscaCertificate", "idTextShipperName").setText(sShipperName);
+			sap.ui.core.Fragment.byId("idTscaCertificate", "idTextReference").setText(sReference);
+			sap.ui.core.Fragment.byId("idTscaCertificate", "idTextRefType").setText(sRefType);
+
+			var oTable = sap.ui.core.Fragment.byId("idTscaCertificate", "idTableTscaCertificateFragment");
+			sap.ui.core.Fragment.byId("idTscaCertificate", "onSaveCertificate").setEnabled(true);
+		},
+		onCloseTscaCertificateFragment: function () {
+			this._aDialog.close();
+			// this.onCloseTscaDetailsFragment();
+			sap.ui.core.Fragment.byId("idTscaCertificate", "idTextDigitalId").setText("");
+			sap.ui.core.Fragment.byId("idTscaDetails", "idNextButton").setEnabled(true);
+		},
+		onSaveTscaCertificate: function (oEvent) {
+			var sReference = sap.ui.core.Fragment.byId("idTscaDetails", "idInputReferenceNumber").getValue();
+			var sRefType = sap.ui.core.Fragment.byId("idTscaDetails", "idSelectReferenceType").getSelectedKey();
+			var sShipperName = sap.ui.core.Fragment.byId("idTscaDetails", "idInputShipperName").getValue();
+			var sCountryOfExp = sap.ui.core.Fragment.byId("idTscaDetails", "idInputCountryOfExp").getSelectedKey();
+
+			var oCertificateData = {};
+			oCertificateData.Reference = sReference;
+			oCertificateData.RefType = sRefType;
+			oCertificateData.ShipperName = sShipperName;
+			oCertificateData.ExpCountry = sCountryOfExp;
+			oCertificateData.ToTscaPrint = [];
+
+			var aData = this.getView().getModel("selectedRows").getData();
+			var itemNo = 10;
+			for (var i = 0; i < aData.length; i++) {
+				var item = {
+					"TscaId": aData[i].TscaId,
+					"ItmNo": "0000" + itemNo
+				};
+				if (itemNo > 99) {
+					var z = "000" + itemNo;
+					item.ItmNo = z;
+				}
+				oCertificateData.ToTscaPrint.push(item);
+				itemNo = itemNo + 10;
+			}
+
+			this.oDataModel.setDeferredGroups(["batchGrpId"]);
+			this.oDataModel.create("/TscaCertPrintSet", oCertificateData, {
+				groupId: "batchGrpId",
+				changeSetId: "batchChangeId"
+			});
+			// debugger;
+			this.oDataModel.submitChanges({
+				success: function (oData, response) {
+
+					if (oData.__batchResponses[0].response && oData.__batchResponses[0].response.statusCode === "400") {
+						var err = JSON.parse(oData.__batchResponses[0].response.body);
+						var errorMsg = err.error.message.value;
+						MessageToast.show(errorMsg);
+					} else {
+						this.onCloseTscaCertificateFragment();
+						this.onCloseTscaDetailsFragment();
+						var sStaCode = oData.__batchResponses[0].__changeResponses[0].statusCode;
+						if (sStaCode === "201") {
+							var arcId1 = oData.__batchResponses[0].__changeResponses[0].data.CertificateId;
+							sap.ui.core.Fragment.byId("idTscaCertificate", "idTextDigitalId").setText(arcId1);
+							var sResp1 = oData.__batchResponses[0].__changeResponses[0].data.Response.Message;
+							MessageToast.show(sResp1 + " with CertificateId: " + arcId1);
+							// this.getOwnerComponent().getModel("selectedRows").setData(null);
+							// this.aIndicesData=[];
+							var oTable = sap.ui.core.Fragment.byId("idTscaDetails", "idTableTscaDetailsFragment");
+							oTable.clearSelection();
+							// oTable.removeSelections();
+						}
+
+					}
+					sap.ui.core.Fragment.byId("idTscaDetails", "idInputReferenceNumber").setValue("");
+					sap.ui.core.Fragment.byId("idTscaDetails", "idSelectReferenceType").setSelectedKey("");
+					sap.ui.core.Fragment.byId("idTscaDetails", "idInputShipperName").setValue("");
+					sap.ui.core.Fragment.byId("idTscaDetails", "idInputCountryOfExp").setSelectedKey("");
+					sap.ui.core.Fragment.byId("idTscaDetails", "panelTscaDetailTable").setVisible(false);
+					var oTCSmartTable = this.getView().byId("idTscaCertificateSearchSmartTable").getTable();
+					var oFilter = [];
+					oTCSmartTable.bindRows({
+						path: "/TscaCertificatesSet",
+						parameters: {
+							'operationMode': 'Server'
+						},
+						filters: []
+					});
+				}.bind(this),
+				error: function (oError) {
+					MessageToast.show("Error");
+				}.bind(this)
+			});
+			sap.ui.core.Fragment.byId("idTscaCertificate", "onSaveCertificate").setEnabled(false);
+			sap.ui.core.Fragment.byId("idTscaDetails", "idNextButton").setEnabled(true);
+
+		},
+
+		onTscaIdLink: function (oEvent) {
+			var oRouter = this.getOwnerComponent().getRouter();
+			this.getView().getModel("supplier").setData(oEvent.getSource().getBindingContext().getObject());
+			oRouter.navTo("DisplayEPA");
+		},
+
+		onUploadSelectedButton: function (oEvent) {
+			// debugger;
+			var fileSetDV5Url = this.getView().getModel().sServiceUrl + "/FileSet";
+			var oUploadSet = sap.ui.core.Fragment.byId("idMassUpload", "fileUpload");
+			var oHeaders = {
+				"x-csrf-token": this.getView().getModel().getSecurityToken()
+			};
+			if (oUploadSet.oFileUpload.files.length === 0) {
+				MessageToast.show(this.i18nResourceBundle.getText("uploadFileMsg"));
+				return;
+			}
+			sap.ui.core.BusyIndicator.show();
+			jQuery.ajax({
+				type: "POST",
+				url: fileSetDV5Url,
+				headers: oHeaders,
+				contentType: "application/xlsx",
+				cache: false,
+				processData: false,
+				dataType: "json",
+				data: oUploadSet.oFileUpload.files[0],
+				success: function (data) {
+					sap.ui.core.BusyIndicator.hide();
+					var fileName = oUploadSet.mProperties.value;
+					var sResponse = data.d.Response.Message;
+					MessageToast.show(fileName + " uploaded Successfully \n" + sResponse);
+					// sap.ui.core.Fragment.byId("idMassUpload", "fileUpload").setEnabled(false);
+					this.onCloseUpload();
+					sap.ui.core.Fragment.byId("idMassUpload", "fileUpload").clear();
+				}.bind(this),
+				error: function (err) {
+					sap.ui.core.BusyIndicator.hide();
+					var sErrorString = JSON.parse(err.responseText).error.message.value;
+					MessageToast.show(sErrorString);
+					this.onCloseUpload();
+				}.bind(this)
+			});
+		},
+		onProceed: function () {
+			this.onUploadSelectedButton();
+		},
+		onAdvSearchTscaDetails: function () {
+			var oTable = sap.ui.core.Fragment.byId("idTscaDetails", "idTableTscaDetailsFragment");
+			var sShipperName = sap.ui.core.Fragment.byId("idTscaDetails", "idInputShipperName").getValue();
+			var sCountryOfExp = sap.ui.core.Fragment.byId("idTscaDetails", "idInputCountryOfExp").getSelectedKey();
+			var sRefType = sap.ui.core.Fragment.byId("idTscaDetails", "idSelectReferenceType").getSelectedKey();
+			var sRef = sap.ui.core.Fragment.byId("idTscaDetails", "idInputReferenceNumber").getValue();
+			if (sRefType === "") {
+				MessageToast.show(this.i18nResourceBundle.getText("selectReferenceType"));
+				return false;
+			}
+			if (sRef === "") {
+				MessageToast.show(this.i18nResourceBundle.getText("enterReferenceNumber"));
+				return false;
+			}
+			var oRefType = new Filter("RefType", FilterOperator.EQ, sRefType);
+			var oRef = new Filter("Reference", FilterOperator.EQ, sRef);
+			var aFilter = [oRefType, oRef]; // Get all filters into an array
+			var oFilter = new Filter({ // Working with multiple filters
+				filters: aFilter,
+				and: true
+					// or: true
+			});
+			var aSorter = new sap.ui.model.Sorter('Sel', false, false);
+			// // //ui table
+			var that = this;
+			if (sRefType === "" || sRef === "") {
+				oTable.unbindRows();
+			} else {
+				oTable.bindRows({
+					path: "/TscaPrintSet",
+					filters: [oFilter],
+					// sorter: [aSorter],	
+					events: {
+						dataReceived: function (oEvent) {
+							if (that.flag === 1) {
+								that.flag = 0;
+								that.onVisibleRowChange();
+							}
+						}
+					}
+					// template: oItemTemplate
+				});
+			}
+			sap.ui.core.Fragment.byId("idTscaDetails", "panelTscaDetailTable").setVisible(true);
+		},
+		onVisibleRowChange: function (oEvent) {
+			var that = this;
+			// debugger;
+			var oListData = sap.ui.core.Fragment.byId("idTscaDetails", "idTableTscaDetailsFragment");
+			var sTableLen = oListData.getBinding("rows").getLength();
+			var oTableRows = oListData.getRows();
+			var sCheckedData = that.aIndicesData;
+			//old
+			if (sCheckedData.length > 0) {
+				for (var j = 0; j < sCheckedData.length; j++) {
+					var oSelected = sCheckedData[j];
+					for (var i = 0; i < sTableLen; i++) {
+						if (oListData.getContextByIndex(i)) {
+							var oContext = oListData.getContextByIndex(i).getObject();
+							if (oSelected.TscaId === oContext.TscaId) {
+								oListData.addSelectionInterval(i, i);
+							} else {}
+						}
+					}
+				}
+			} else {}
+			//old
+		},
+		handleSelectedRows: function (oEvent) {
+
+			var oListData = sap.ui.core.Fragment.byId("idTscaDetails", "idTableTscaDetailsFragment");
+			var sSelectRows = oListData.getSelectedIndices();
+			var rIndex = oEvent.getParameters().rowIndex;
+
+			if (sSelectRows.indexOf(rIndex) === -1 && rIndex !== -1) {
+
+				var oContext = oListData.getContextByIndex(rIndex).getObject();
+				var sData = this.aIndicesData;
+				for (var k = 0; k < sData.length; k++) {
+					var sTscaId = sData[k].TscaId;
+					if (sTscaId === oContext.TscaId) {
+						this.aIndicesData.splice(k, 1);
+					}
+				}
+			} else {
+				for (var i = 0; i < sSelectRows.length; i++) {
+					var flag = 0;
+
+					if (oListData.getContextByIndex(sSelectRows[i])) {
+						var oContext = oListData.getContextByIndex(sSelectRows[i]).getObject();
+						var sPath = oListData.getContextByIndex(sSelectRows[i]).getPath();
+						for (var j = 0; j < this.aIndicesData.length; j++) {
+							if ((this.aIndicesData[j].TscaId) === oContext.TscaId) {
+								flag = 1;
+								break
+							}
+						}
+						if (flag === 0) {
+							this.aIndicesData.push(oContext);
+						}
+					}
+				}
+			}
+			// this.getOwnerComponent().getModel("selectedRows").setData(this.aIndicesData);	
+
+		},
+		onSearchTscaDetails: function (oEvent) {
+
+			this.flag = 1;
+			var oQuery = oEvent.getParameter("query");
+			if (!oQuery) {
+
+				oQuery = oEvent.getParameter("newValue");
+			}
+
+			var oListData = sap.ui.core.Fragment.byId("idTscaDetails", "idTableTscaDetailsFragment");
+			var sSearch = new Filter("SearchTerm", FilterOperator.Contains, oQuery.toUpperCase());
+			var aFilter = [sSearch];
+			var oFilter = new Filter({
+				filters: aFilter
+					// and: true 
+			});
+
+			oListData.getBinding("rows").filter(oFilter);
+		},
+		onBeforeRebindTable: function (oEvent) {
+			var oSmartTable = this.getView().byId("idTscaDataSmartTable");
+			var sKey = oSmartTable.getPersistencyKey("SmartTableTSCADATA");
+			var mBindingParams = oEvent.getParameter("bindingParams");
+
+			if (oSmartTable.getTable().getBinding("rows")) {
+				oSmartTable.getTable().getBinding("rows").sOperationMode = "Server";
+			}
+			// //for date validation on p13n filter
+			if (oEvent.getParameters().bindingParams.filters.length === 0) {
+				return false;
+			}
+			var sFilterPath = oEvent.getParameters().bindingParams.filters[0].sPath;
+			if (sFilterPath === "IssuedDate" || sFilterPath === "CreateDt" || sFilterPath === "ChangeDt") {
+				var oDate1 = oEvent.getParameters().bindingParams.filters[0].oValue1;
+				var oDate2 = oEvent.getParameters().bindingParams.filters[0].oValue2;
+
+				var diff = Math.abs(Date.parse(oDate1) - Date.parse(oDate2));
+				var diffD = Math.ceil(diff / (1000 * 60 * 60 * 24));
+				if (diffD > 30) {
+					MessageBox.error(this.i18nResourceBundle.getText("dateRangeExceed"));
+					// oEvent.getParameters().bindingParams.filters=[];
+					return false;
+				}
+			}
+		},
+		onBeforeRebindTscaCertTable: function (oEvent) {
+			var oSmartTable = this.getView().byId("idTscaCertificateSearchSmartTable");
+			var mBindingParams = oEvent.getParameter("bindingParams");
+
+			if (oSmartTable.getTable().getBinding("rows")) {
+				oSmartTable.getTable().getBinding("rows").sOperationMode = "Server";
+			}
+			// //for date validation on p13n filter	
+			if (oEvent.getParameters().bindingParams.filters.length === 0) {
+				return false;
+			}
+			var sFilterPath = oEvent.getParameters().bindingParams.filters[0].sPath;
+			if (sFilterPath === "CreatedOn") {
+				var oDate1 = oEvent.getParameters().bindingParams.filters[0].oValue1;
+				var oDate2 = oEvent.getParameters().bindingParams.filters[0].oValue2;
+				var diff = Math.abs(Date.parse(oDate1) - Date.parse(oDate2));
+				var diffD = Math.ceil(diff / (1000 * 60 * 60 * 24));
+				if (diffD > 30) {
+					MessageBox.error(this.i18nResourceBundle.getText("dateRangeExceed"));
+					// oEvent.getParameters().bindingParams.filters=[];	
+					return false;
+				}
+			}
+		},
+
+		onRefreshTscaCertificate: function () {
+			var oTCSmartTable = this.getView().byId("idTscaCertificateSearchSmartTable").getTable();
+
+			this.getView().byId("searchFieldTscaCertificate").setValue(""); //To clear search field input
+			this.getView().byId("idTscaCertAdvSearchRefNumber").setValue(""); //
+			this.getView().byId("idTscaCertAdvSearchRefType").setValue(""); //
+			this.getView().byId("idTscaCertAdvSearchRefPrdct").setValue(""); //
+			this.getView().byId("idTscaCertAdvSearchSupplier").setValue("");
+			this.getView().byId("idTscaCertificateSearchTable").clearSelection();
+			// this.getView().byId("idTscaCertCreatedonFrom").setValue("");
+			// this.getView().byId("idTscaCertCreatedonTo").setValue("");
+			this.getView().byId("idDetailPanel").setVisible(false);
+			// this.getView().byId("idTscaCertAdvancedSearchPanel").setVisible(false);
+			this.getView().byId("idTscaCertificateSearchTable").setVisibleRowCount(10);
+			var oFilter = [];
+			oTCSmartTable.bindRows({
+				path: "/TscaCertificatesSet",
+				parameters: {
+					'operationMode': 'Server'
+				},
+				filters: []
+			});
+
+		},
+		onFilterTscaCertificate: function (oEvent) {
+			var oQuery = oEvent.getParameter("query");
+			if (!oQuery) {
+				oQuery = oEvent.getParameter("newValue");
+			}
+			var oListData = this.getView().byId("idTscaCertificateSearchSmartTable").getTable();
+			if(oQuery.length>=2){
+			var aFilter = [],
+				oFilter = [];
+			aFilter.push(new Filter('Reference', FilterOperator.Contains, oQuery.toUpperCase()));
+			// aFilter.push(new Filter('RefType', FilterOperator.Contains,oQuery.toUpperCase()));
+			// aFilter.push(new Filter('Version', FilterOperator.Contains,oQuery.toUpperCase()));
+			if(oQuery.length>=2 && oQuery.length<=3){
+			aFilter.push(new Filter('ExpCountry', FilterOperator.Contains, oQuery.toUpperCase()));
+			}
+			oFilter.push(new Filter(aFilter, false));
+			oListData.getBinding("rows").filter(oFilter); //Returns filtered Data
+			}
+			if(oQuery.length == 0){
+			oListData.getBinding("rows").filter([]);
+			}
+		},
+		onTscaCertAdvancedSearch: function () {
+			var sRef = this.getView().byId("idTscaCertAdvSearchRefNumber").getValue().toUpperCase();
+			var sRefType = this.getView().byId("idTscaCertAdvSearchRefType").getSelectedKey();
+			var sPrdct = this.getView().byId("idTscaCertAdvSearchRefPrdct").getValue().toUpperCase();
+			var sSupplier = this.getView().byId("idTscaCertAdvSearchSupplier").getValue().toUpperCase();
+
+			var sFromDate = this.getView().byId("idTscaCertCreatedonFrom").getValue();
+			var sToDate = this.getView().byId("idTscaCertCreatedonTo").getValue();
+
+			if (sFromDate === "" || sToDate === "") {
+				MessageToast.show(this.i18nResourceBundle.getText("createDateMandatory"));
+				return false;
+			}
+			var startDate = this.getView().byId("idTscaCertCreatedonFrom").getDateValue();
+			var endDate = this.getView().byId("idTscaCertCreatedonTo").getDateValue();
+			if (sFromDate === "" && sToDate !== "" || sFromDate !== "" && sToDate === "") {
+				MessageToast.show(this.i18nResourceBundle.getText("selectBothDates"));
+				return false;
+			}
+			if (sFromDate > sToDate) {
+				MessageToast.show(this.i18nResourceBundle.getText("invalidDateRange"));
+				return false;
+			}
+			if (startDate !== null && endDate !== null) {
+				var diff = Math.abs(Date.parse(sFromDate) - Date.parse(sToDate));
+				var diffD = Math.ceil(diff / (1000 * 60 * 60 * 24));
+				// console.log(diffD);
+				// debugger;
+				if (diffD > 30) {
+					MessageToast.show(this.i18nResourceBundle.getText("dateRangeExceed"));
+					return false;
+				}
+			}
+
+			// If only ref number and ref type are provided, it filters on header table
+			// if (sPrdct === "" && sSupplier === "") {
+			var aFilter = [];
+			if (sRef !== "") {
+				var oRef = new Filter("Reference", FilterOperator.Contains, sRef);
+				if (sRef && sRef.length === 40) {
+					oRef = new Filter("Reference", FilterOperator.EQ, sRef);
+				}
+				aFilter.push(oRef);
+			}
+
+			if (sSupplier !== "") {
+				var oSupplierItem = new Filter("Supplier", FilterOperator.Contains, sSupplier);
+				if (sSupplier && sSupplier.length === 40) {
+					oSupplierItem = new Filter("Supplier", FilterOperator.EQ, sSupplier);
+				}
+				aFilter.push(oSupplierItem);
+			}
+
+			if (sPrdct !== "") {
+				var oPrdctItem = new Filter("Product", FilterOperator.Contains, sPrdct);
+				if (sPrdct && sPrdct.length === 40) {
+					oPrdctItem = new Filter("Product", FilterOperator.EQ, sPrdct);
+				}
+				aFilter.push(oPrdctItem);
+			}
+			if (sRefType !== "") {
+				var oRefType = new Filter("RefType", FilterOperator.EQ, sRefType);
+				aFilter.push(oRefType);
+			}
+			if (sFromDate !== "" || sToDate !== "") {
+				var oDate = new Filter("CreatedOn", FilterOperator.BT, sFromDate, sToDate);
+				aFilter.push(oDate);
+			}
+
+			var oListData = this.getView().byId("idTscaCertificateSearchSmartTable");
+			var oFilter = new Filter({
+				filters: aFilter,
+				and: true
+					// or: true
+			});
+
+			oListData.getTable().bindRows({
+				path: "/TscaCertificatesSet",
+				parameters: {
+					'operationMode': 'Server'
+				},
+				filters: oFilter
+			});
+
+			var oItemsTable = this.getView().byId("idTscaItemsTable");
+			oItemsTable.getBinding("rows").filter([]);
+			// oItemsTable.setVisible(false);
+			this.getView().byId("idDetailPanel").setVisible(false);
+		},
+		onReferenceClick: function (oEvent) {
+			this.getView().byId("idDetailPanel").setVisible(true);
+			// debugger;
+			if (oEvent.getParameter("rowIndex") == -1) {
+				this.getView().byId("idDetailPanel").setVisible(false);
+				return false;
+			}
+			var oTable = this.getView().byId("idTscaCertificateSearchTable");
+			var row = oEvent.getParameter("rowIndex");
+			var rowData = oTable.getBinding("rows").aKeys[row];
+			//rowData - spath
+			var newModel = new sap.ui.model.json.JSONModel({});
+			this.getView().setModel(newModel, "rowUrl");
+			this.getView().getModel("rowUrl").setData(rowData);
+
+			var sPath = "/" + rowData + "/ToTscaCertificateItems"; //generated url with expanded entityset
+
+			var aFilter = [];
+			var sPrdct = this.getView().byId("idTscaCertAdvSearchRefPrdct").getValue().toUpperCase();
+			var sSupplier = this.getView().byId("idTscaCertAdvSearchSupplier").getValue().toUpperCase();
+
+			var oPrdctItem = new Filter("Product", FilterOperator.Contains, sPrdct);
+			aFilter.push(oPrdctItem);
+			var oSupplierItem = new Filter("Supplier", FilterOperator.Contains, sSupplier);
+			aFilter.push(oSupplierItem);
+
+			this.oDataModel.read(sPath, {
+				filters: aFilter,
+				success: function (oData, oResponse) {
+					// MessageBox.information("Data Imported");
+					var aResult = [];
+					for (var i = 0; i < oData.results.length; i++) {
+						aResult.push(oData.results[i]);
+						// this.getView().getModel("itemsData").setData(oData.results[i]);
+						this.getView().getModel("itemsData").setData(aResult);
+					}
+					// this.getView().getModel("itemsData").setData(aResult);
+				}.bind(this),
+				error: function (error) {}
+			});
+			var oItemsTable = this.getView().byId("idTscaItemsTable");
+			oItemsTable.getBinding("rows").filter([]);
+			oTable.setVisibleRowCount(6);
+
+		},
+		onExportItemsTable: function (oEvent) {
+			// debugger;
+			var sUrl = this.getView().getModel("rowUrl").getData();
+			var sPath = "/" + sUrl + "/ToTscaCertificateItems";
+
+			var oExport = new Export({
+				exportType: new ExportTypeCSV({
+					separatorChar: "\t",
+
+					mimeType: "application/vnd.ms-excel",
+
+					charset: "utf-8",
+
+					fileExtension: "xls"
+				}),
+				models: this.getView().getModel(),
+				rows: {
+					path: "/" + sUrl + "/ToTscaCertificateItems"
+
+				},
+
+				columns: [{
+					name: "Supplier",
+					template: {
+						content: "{Supplier}"
+					}
+				}, {
+					name: "Supplier Description",
+					template: {
+						content: "{Suppdesc}"
+					}
+				}, {
+					name: "Apple Part Number",
+					template: {
+						content: "{SeqNo}"
+					}
+				}, {
+					name: "Apple Product",
+					template: {
+						content: "{Product}"
+					}
+				}, {
+					name: "Manufacturer",
+					template: {
+						content: "{Manufacturer}"
+					}
+				}, {
+					name: "Manufacturer Description",
+					template: {
+						content: "{Manufdesc}"
+					}
+
+				}]
+			});
+
+			// download exported file
+			oExport.saveFile().catch(function (oError) {
+				MessageToast.show("Error when downloading data" + oError);
+			}).then(function () {
+				oExport.destroy();
+			});
+		},
+		onCertificateClick: function (oEvent) {
+			var cId = oEvent.getSource().getBindingContext().getObject().CertificateId;
+			var sPath = "/GetUrlSet('" + cId + "')";
+			console.log(sPath);
+			this.oDataModel.read(sPath, {
+				success: function (oData, oResponse) {
+					if (oResponse.statusCode && oResponse.statusCode === "400") {
+						// var err = JSON.parse();
+						var errorMsg = oResponse.data.Message;
+						MessageToast.show(errorMsg);
+					} else {
+						var sStaCode = oResponse.statusCode;
+						if (sStaCode === "200") {
+							var sUrl = oData.Url;
+							sap.m.URLHelper.redirect(sUrl, true);
+						}
+					}
+				}.bind(this),
+				error: function (error) {
+					MessageToast.show("Error");
+				}
+			});
+		},
+		//org
+		onFileFormat: function () {
+			var aColmns = [],
+				aProducts, oSettings, oSheet;
+
+			var oModel = new JSONModel([{
+				"SupplierPartNumber": "Enter a value",
+				"SupplierDesc": "Enter a value",
+				"CountryOrg": "Enter a value",
+				"PartNumber": "Enter a value",
+				"LogicalSysGrp": "Enter a value",
+				"ManufacturerNum": "Enter a value",
+				"Issueddate": "Enter a value"
+			}]);
+
+			aColmns.push({
+				label: "Supplier Part Number",
+				property: "SupplierPartNumber"
+			});
+			aColmns.push({
+				label: "Supplier Part Description",
+				property: "SupplierDesc"
+			});
+			aColmns.push({
+				label: "Country of Origin",
+				property: "CountryOrg"
+			});
+			aColmns.push({
+				label: "Apple Part Number",
+				property: "PartNumber"
+			});
+			aColmns.push({
+				label: "Logical System Group",
+				property: "LogicalSysGrp"
+			});
+			aColmns.push({
+				label: "Manufacturer Number",
+				property: "ManufacturerNum"
+					// , type: sap.ui.export.EdmType.String
+			});
+			aColmns.push({
+				label: "Date Issued",
+				property: "Issueddate"
+			});
+			aProducts = oModel.getData();
+			oSettings = {
+				workbook: {
+					columns: aColmns,
+					context: {
+						sheetName: "Data",
+						metaSheetName: "Instructions",
+						metainfo: [{
+							// name: "Fields",
+							items: [
+
+								{
+									key: "Fields",
+									value: "Remarks"
+								}, {
+									key: "Supplier Part Number",
+									value: "Mandatory field. This  is the part number of Supplier. Length should be 40"
+								}, {
+									key: "Supplier Part Description",
+									value: "This  is the part description of Supplier. Length should be 60"
+								}, {
+									key: "Country of Origin",
+									value: "Mandatory field. Country of Origin should be 2 digit Country code. Length should be 2"
+								}, {
+									key: "Apple Part Number",
+									value: "Mandatory field. Reflects the identification of a product. Length should be 18"
+								}, {
+									key: "Logical System Group",
+									value: "Mandatory field. Logical System group is used to get the data from different systems with GTS. Values can be like PD4020, PD2020. Length should be 10"
+								}, {
+									key: "Manufacturer Number",
+									value: "Mandatory field. Business Partner number which is created as a Manufacturer. Length should be 10"
+								}, {
+									key: "Date Issued",
+									value: "Mandatory field. Date format should be MM.DD.YYYY. Length should be 10"
+								}
+							]
+						}]
+					},
+				},
+				dataSource: aProducts,
+				fileName: "Upload Template.xlsx"
+			};
+
+			oSheet = new Spreadsheet(oSettings);
+			oSheet.build()
+				.then(function () {
+					MessageToast.show("Upload Format File was downloaded");
+				})
+				.finally(oSheet.destroy);
+		},
+
+	
+		onTileSelect: function (oEvent) {
+			var sSelectedKey = oEvent.getSource().getSelectedKey();
+			var oVisible = oEvent.getSource().getExpanded();
+			var oCertificateTable = this.getView().byId("idTscaCertificateSearchSmartTable");
+			if (this.flagValue === 0 && oVisible === true && sSelectedKey === "TSCA Certificate") {
+				oCertificateTable.rebindTable();
+				this.flagValue = 1;
+			}
+		},
+		onInput:function(oEvent){
+			var oIn = this.getView().byId(oEvent.getSource().getId());
+			oIn.setShowValueHelp(true);
+			if (oIn.getValue() !== "") {
+				oIn.setShowValueHelp(true);
+			} else {
+				oIn.setShowValueHelp(false);
+			}
+		},
+		onClear: function (oEvent) {
+			var oIn = this.getView().byId(oEvent.getParameters().id);
+			oIn.setValue(null);
+			oIn.setShowValueHelp(false);
+
+		},
+		onSuggestion: function (event) {
+			var value = event.getParameter("suggestValue");
+			this.oSF = sap.ui.core.Fragment.byId("idTscaDetails", "idSearchTermField");
+			var filters = [];
+			if (value) {
+				filters = [
+					new sap.ui.model.Filter([
+						new sap.ui.model.Filter("SearchTerm", function (sText) {
+							return (sText || "").toUpperCase().indexOf(value.toUpperCase()) > -1;
+						})
+					], false)
+				];
+			}
+
+			this.oSF.getBinding("suggestionItems").filter(filters);
+			this.oSF.suggest();
+		}
+	});
+});
