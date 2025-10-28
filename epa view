@@ -1,0 +1,405 @@
+<mvc:View controllerName="sap.com.main.controller.EPA" xmlns:mvc="sap.ui.core.mvc" displayBlock="true" xmlns="sap.m" 
+	xmlns:core="sap.ui.core" xmlns:smartFilterBar="sap.ui.comp.smartfilterbar" xmlns:smartTable="sap.ui.comp.smarttable"
+	xmlns:f="sap.ui.layout.form" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:ui="sap.ui.table" 
+	xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1" height="100%">
+	<Page id="page" showHeader="false" enableScrolling="false">
+		<content>
+			<Panel class="zEP_maxScreenOpt">
+				<IconTabBar id="idIconTabBarEPA" headerMode="inline" expanded="{device>/isNoPhone}" class="zEP_mainIconTabbar zEP_headerBnr" visible="false"
+					select="onTileSelect">
+					<items>
+						<IconTabFilter id="idTscaDataTab" text="{i18n>tscaMasterData}" icon="sap-icon://official-service" key="{i18n>tscaMasterData}"
+							visible="false">
+							<VBox fitContainer="true" class="sapUiMediumMarginTop">
+								<smartTable:SmartTable id="idTscaDataSmartTable" entitySet="TscaListSet" tableType="Table" useExportToExcel="false"
+									showVariantManagement="true" afterVariantSave="onSaveVariant" afterVariantInitialise="onVariantInitialise"
+									afterVariantApply="onApplyVariant" beforeExport="onBeforeExport" useVariantManagement="true" useTablePersonalisation="true"
+									showRowCount="true" beforeRebindTable="onBeforeRebindTable" persistencyKey="SmartTableTSCADATA" enableAutoBinding="false"
+									requestAtLeastFields="Supplier,Suppdesc,Product,Country,Prtxt,Manufacturer,Manufdesc,LogGrp,IssuedDate,DelFlg,CreateDt,ChangeDt,CreatedBy,ChangedBy,CountryText,ManufCity,ManufRegion,ManufCountry" editTogglable="false" app:useSmartToggle="true" class="zEP_smartTable">
+									<smartTable:layoutData>
+										<FlexItemData growFactor="1" baseSize="0%"/>
+									</smartTable:layoutData>
+									<smartTable:customToolbar>
+										<OverflowToolbar design="Transparent" class="zEP_tableToolbar">
+											<SearchField id="searchFieldTscaData" width="25%" tooltip="{i18n>tscaSearch}" placeholder="{i18n>tscaSearch}" liveChange="onFilter"
+												class="zEP_normalSearch zEP_searchAlignment"/>
+											<Link text="{i18n>advanceSearch}" id="idadvanceSearch" press="handleAdvanceSearchlink" tooltip="" class="zEP_advanceSearchText"></Link>
+											<core:Icon src="sap-icon://expand-group" id="idicon" press="handleAdvanceSearchlink" class="zEP_advanceSearchIcon"></core:Icon>
+											<ToolbarSpacer/>
+											<Button id="idCreateButton" text="{i18n>createNew}" tooltip="{i18n>createNewEntry}" press="onCreateNewEpa"/>
+											<MenuButton text="{i18n>moreActions}" width="8rem">
+												<menu>
+													<Menu id="idMenuBtn">
+														<MenuItem text="{i18n>log}" icon="sap-icon://validate" press="onLogPressTsca"/>
+														<MenuItem icon="sap-icon://arrow-top" id="idMassUploadMenu" text="{i18n>massUpload}" press="onMassUpload"
+															enabled="{controlProperty>/isMenuMassUpload}"/>
+														<MenuItem icon="sap-icon://arrow-bottom" text="{i18n>download}" enabled="true" press="onDownloadTable" class="download"/>
+													</Menu>
+												</menu>
+											</MenuButton>
+											<OverflowToolbarButton icon="sap-icon://synchronize" tooltip="{i18n>refresh}" press="onRefresh" class="zEP_iconCircle"/>
+										</OverflowToolbar>
+									</smartTable:customToolbar>
+									<Panel visible="false" id="idAdvancedSearchPanel" class="zEP_advanceSearchPanel">
+										<f:SimpleForm id="idDashboardFilterForm" editable="true" layout="ResponsiveGridLayout" title="" labelSpanM="4" emptySpanL="0" emptySpanM="0"
+											columnsL="2" columnsM="2" class="zEP_noTitleText">
+											<core:Title/>
+											<Label text="{i18n>createdOnFrom}"/>
+											<DatePicker id="idCreatedonFrom" class="zEP_advSearchPanelInput" required="true" change="onFromDateCre" displayFormat="MM/dd/YYYY"
+												dateValue="{ path: 'view>/dBackDate'}" valueFormat="YYYY-MM-dd"></DatePicker>
+											<Label text="{i18n>changedOnFrom}"/>
+											<DatePicker id="idChangedonFrom" class="zEP_advSearchPanelInput" change="onFromDateChn" displayFormat="MM/dd/YYYY"
+												dateValue="{ path: 'view>/bBackDate'}" valueFormat="YYYY-MM-dd"></DatePicker>
+											<Label text="{i18n>applePartNumber}"/>
+											<Input placeholder="{i18n>applePartNumber}" id="idAdvSearchAppleNumber" maxLength="40" liveChange="onInput" valueHelpOnly="false"
+												showValueHelp="false" valueHelpIconSrc="sap-icon://sys-cancel" valueHelpRequest="onClear" class="zEP_advSearchPanelInput"></Input>
+											<Label text="{i18n>supplierPartNumber}"/>
+											<Input placeholder="{i18n>supplierPartNumber}" valueHelpOnly="false" maxLength="40" liveChange="onInput" showValueHelp="false" valueHelpIconSrc="sap-icon://sys-cancel"
+												valueHelpRequest="onClear" id="idAdvSearchSupplierNumber" class="zEP_advSearchPanelInput"></Input>
+											<core:Title/>
+											<Label text="{i18n>createdOnTo}"/>
+											<DatePicker id="idCreatedonTo" displayFormat="MM/dd/YYYY" required="true" change="onToDateCre" dateValue="{ path: 'view>/dTodayDate'}"
+												class="zEP_advSearchPanelInput" valueFormat="YYYY-MM-dd"></DatePicker>
+											<Label text="{i18n>changedOnTo}"/>
+											<DatePicker id="idChangedonTo" displayFormat="MM/dd/YYYY" change="onToDateChn" dateValue="{ path: 'view>/bTodayDate'}"
+												class="zEP_advSearchPanelInput" valueFormat="YYYY-MM-dd"></DatePicker>
+											<Label text="{i18n>manufacturerNumber}"/>
+											<Input placeholder="{i18n>manufacturerNumber}" id="idAdvSearchManuNumber" maxLength="10" liveChange="onInput" valueHelpOnly="false"
+												showValueHelp="false" valueHelpIconSrc="sap-icon://sys-cancel" valueHelpRequest="onClear" class="zEP_advSearchPanelInput"></Input>
+											<core:Title/>
+										</f:SimpleForm>
+										<HBox justifyContent="End">
+											<Button text="{i18n>search}" press="onAdvancedSearch" class="sapUiSmallMarginEnd"/>
+											<Button text="{i18n>reset}" press="onTscaReset" class="sapUiSmallMarginEnd zEP_secondaryBtn"/>
+										</HBox>
+									</Panel>
+									<ui:Table id="idProjectTable" visible="true" width="100%" threshold="100" selectionMode="Single" selectionBehavior="RowOnly" rowHeight="40px"
+										showNoData="false" rowSelectionChange="onSelectProject" enableBusyIndicator="true" busyIndicatorDelay="0"
+										class="zEP_maxScreen sapUiSmallMarginTop">
+										<ui:columns >
+											<ui:Column hAlign="Right" filterProperty="TscaId" width="7rem" sortProperty="TscaId" visible="{visibleProperty>/bTscaIdColumn}"
+												id="idColumnTscaId"
+												app:p13nData='\{"columnKey": "TscaId", "columnIndex":"1","leadingProperty":"TscaId", "additionalProperty":"TscaId", "sortProperty": "TscaId", "filterProperty": "TscaId", "type" : "string" ,"maxLength" : "10"}'>
+												<Label text="{i18n>tscaId}"/>
+												<ui:template>
+													<Link id="tscaIdLink" text="{TscaId}" press="onTscaIdLink" enabled="true"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="12rem" filterProperty="Supplier" sortProperty="Supplier" visible="{visibleProperty>/bSupplierColumn}"
+												id="idColumnSupplierPartNumber"
+												app:p13nData='\{"columnKey": "Supplier", "columnIndex":"2","leadingProperty":"Supplier", "additionalProperty":"Supplier","sortProperty": "Supplier", "filterProperty": "Supplier", "type" : "string" , "maxLength" : "40"}'>
+												<Label text="{i18n>supplierPartNumber}"/>
+												<ui:template >
+													<Text text="{Supplier}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="12rem" id="idColumnSupplierDesc" visible="{visibleProperty>/bSuppdescColumn}"
+												app:p13nData='\{"columnKey": "Suppdesc", "columnIndex":"3","leadingProperty":"Suppdesc", "additionalProperty":"Suppdesc", "type" : "string"}'>
+												<Label text="{i18n>supplierPartDescription}"/>
+												<ui:template>
+													<Text text="{Suppdesc}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="10rem" filterProperty="Country" sortProperty="Country" id="idColumnCountry"
+												visible="{visibleProperty>/bCountryColumn}"
+												app:p13nData='\{"columnKey": "Country", "columnIndex":"4","leadingProperty":"Country", "additionalProperty":"Country","sortProperty": "Country", "filterProperty": "Country", "type" : "string", "maxLength" : "2"}'>
+												<Label text="{i18n>countryOfOrigin}"/>
+												<ui:template>
+													<Text text="{Country}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="11rem" filterProperty="Product" sortProperty="Product" id="idColumnProduct"
+												visible="{visibleProperty>/bProductColumn}"
+												app:p13nData='\{"columnKey": "Product", "columnIndex":"5","leadingProperty":"Product", "additionalProperty":"Product","sortProperty": "Product", "filterProperty": "Product", "type" : "string", "maxLength" : "40"}'>
+												<Label text="{i18n>applePartNumber}"/>
+												<ui:template>
+													<Text text="{Product}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="12rem" id="idColumnPrtxt" visible="{visibleProperty>/bPrtxtColumn}"
+												app:p13nData='\{"columnKey": "Prtxt", "columnIndex":"6","leadingProperty":"Prtxt", "additionalProperty":"Prtxt", "type" : "string"}'>
+												<Label text="{i18n>applePartDescription}"/>
+												<ui:template>
+													<Text text="{Prtxt}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="12rem" filterProperty="LogGrp" sortProperty="LogGrp" id="idColumnLogGrp"
+												visible="{visibleProperty>/bLogGrpColumn}"
+												app:p13nData='\{"columnKey": "LogGrp", "columnIndex":"7","leadingProperty":"LogGrp", "additionalProperty":"LogGrp","sortProperty": "LogGrp", "filterProperty": "LogGrp", "type" : "string","maxLength" : "10"}'>
+												<Label text="{i18n>logicalSystemGroup}"/>
+												<ui:template>
+													<Text text="{LogGrp}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="12rem" filterProperty="Manufacturer" sortProperty="Manufacturer" id="idColumnManufacturer"
+												visible="{visibleProperty>/bManufacturerColumn}"
+												app:p13nData='\{"columnKey": "Manufacturer", "columnIndex":"8","leadingProperty":"Manufacturer", "additionalProperty":"Manufacturer","sortProperty": "Manufacturer", "filterProperty": "Manufacturer", "type" : "string", "maxLength" : "10"}'>
+												<Label text="{i18n>manufacturerNumber}"/>
+												<ui:template>
+													<Text text="{Manufacturer}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="12rem" id="idColumnManufdesc" visible="{visibleProperty>/bManufdescColumn}"
+												app:p13nData='\{"columnKey": "Manufdesc", "columnIndex":"9","leadingProperty":"Manufdesc", "additionalProperty":"Manufdesc", "type" : "string"}'>
+												<Label text="{i18n>manufacturerName}"/>
+												<ui:template>
+													<Text text="{Manufdesc}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="8rem" filterProperty="IssuedDate" sortProperty="IssuedDate" id="idColumnIssuedDate"
+												visible="{visibleProperty>/bIssuedDateColumn}"
+												app:p13nData='\{"columnKey": "IssuedDate", "columnIndex":"10","leadingProperty":"IssuedDate", "additionalProperty":"IssuedDate","sortProperty": "IssuedDate", "filterProperty": "IssuedDate", "type" : "date"} '>
+												<Label text="{i18n>dateIssued}"/>
+												<ui:template>
+													<!--<Text text="{ path: 'IssuedDate',type: 'sap.ui.model.type.Date', formatOptions: { pattern: 'MM/dd/yyyy'}}"/>-->
+													<Text text="{ path: 'IssuedDate', formatter:'.displayFormat'}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="6rem" filterProperty="DelFlg" sortProperty="DelFlg" id="idColumnDelFlg"
+												visible="{visibleProperty>/bDelFlgColumn}"
+												app:p13nData='\{"columnKey": "DelFlg", "columnIndex":"11","leadingProperty":"DelFlg", "additionalProperty":"DelFlg","sortProperty": "DelFlg", "filterProperty": "DelFlg", "type" : "boolean"}'>
+												<Label text="{i18n>deleted}"/>
+												<ui:template>
+													<CheckBox id="idDelFlgChkBx" selected="{DelFlg}" editable="false"/>
+													<!--text="{DelFlg}"-->
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Right" width="8rem" filterProperty="CreateDt" sortProperty="CreateDt" id="idColumnCreatedOn"
+												visible="{visibleProperty>/bCreatedOnColumn}"
+												app:p13nData='\{"columnKey": "CreateDt", "columnIndex":"12","leadingProperty":"CreateDt", "additionalProperty":"CreateDt","sortProperty": "CreateDt", "filterProperty": "CreateDt", "type" : "date"}'>
+												<Label text="{i18n>createdOn}"/>
+												<ui:template>
+													<!--<Text text="{path: 'CreateDt' ,type: 'sap.ui.model.type.Date', formatOptions: { pattern: 'MM/dd/yyyy'}}"/>-->
+													<Text text="{ path: 'CreateDt', formatter:'.displayFormat'}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Right" width="8rem" filterProperty="ChangeDt" sortProperty="ChangeDt" id="idColumnChangedOn"
+												visible="{visibleProperty>/bChangedOnColumn}"
+												app:p13nData='\{"columnKey": "ChangeDt", "columnIndex":"13","leadingProperty":"ChangedOn", "additionalProperty":"ChangeDt","sortProperty": "ChangeDt", "filterProperty": "ChangeDt", "type" : "date"}'>
+												<!--leading property is changedon, for etag it is  placed there-->
+												<Label text="{i18n>changedOn}"/>
+												<ui:template >
+													<!--<Text text="{path: 'ChangeDt',type: 'sap.ui.model.type.Date', formatOptions: { pattern: 'MM/dd/yyyy'}}"/>-->
+													<Text text="{ path: 'ChangeDt', formatter:'.displayFormat'}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="9rem" filterProperty="CreatedBy" sortProperty="CreatedBy" id="idColumnCreatedBy"
+												visible="{visibleProperty>/bCreatedByColumn}"
+												app:p13nData='\{"columnKey": "CreatedBy", "columnIndex":"14","leadingProperty":"CreatedBy", "additionalProperty":"CreatedBy","sortProperty": "CreatedBy", "filterProperty": "CreatedBy", "type" : "string" ,"maxLength" : "25"}'>
+												<Label text="{i18n>createdBy}"/>
+												<ui:template>
+													<Text text="{CreatedBy}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="9rem" filterProperty="ChangedBy" sortProperty="ChangedBy" id="idColumnChangedBy"
+												visible="{visibleProperty>/bChangedByColumn}"
+												app:p13nData='\{"columnKey": "ChangedBy", "columnIndex":"15","leadingProperty":"ChangedBy", "additionalProperty":"ChangedBy","sortProperty": "ChangedBy", "filterProperty": "ChangedBy", "type" : "string", "maxLength" : "25"}'>
+												<Label text="{i18n>changedBy}"/>
+												<ui:template>
+													<Text text="{ChangedBy}"/>
+												</ui:template>
+											</ui:Column>
+										</ui:columns>
+										<ui:Column hAlign="Left" width="8rem" id="idColumnCountryText" visible="{visibleProperty>/bCountryTextColumn}"
+											app:p13nData='\{"columnKey": "CountryText", "columnIndex":"16","leadingProperty":"CountryText", "additionalProperty":"CountryText", "type" : "string"}'>
+											<Label text="{i18n>countryText}"/>
+											<ui:template>
+												<Text text="{CountryText}"/>
+											</ui:template>
+										</ui:Column>
+										<ui:Column hAlign="Left" width="12rem" id="idColumnManufCity" visible="false"
+											app:p13nData='\{"columnKey": "manufacturerCity", "columnIndex":"17","leadingProperty":"ManufCity","type" : "string"}'>
+											<Label text="{i18n>manufacturerCity}"/>
+											<ui:template>
+												<Text text="{ManufCity}"/>
+											</ui:template>
+										</ui:Column>
+										<ui:Column hAlign="Left" width="12rem" id="idColumnManufRegion" visible="false"
+											app:p13nData='\{"columnKey": "manufacturerRegion", "columnIndex":"18","leadingProperty":"ManufRegion", "type" : "string"}'>
+											<Label text="{i18n>manufacturerRegion}"/>
+											<ui:template>
+												<Text text="{ManufRegion}"/>
+											</ui:template>
+										</ui:Column>
+										<ui:Column hAlign="Left" width="12rem" id="idColumnManufCountry" visible="false"
+											app:p13nData='\{"columnKey": "manufacturerCountry", "columnIndex":"19","leadingProperty":"ManufCountry", "type" : "string"}'>
+											<Label text="{i18n>manufacturerCountry}"/>
+											<ui:template>
+												<Text text="{ManufCountry}"/>
+											</ui:template>
+										</ui:Column>
+									</ui:Table>
+								</smartTable:SmartTable>
+							</VBox>
+						</IconTabFilter>
+						<IconTabFilter id="idTscaCerttTab" text="{i18n>tscaCertificate}" key="{i18n>tscaCertificate}" icon="sap-icon://manager-insight"
+							visible="false">
+							<!--visible="{authModel>/isTSCACertVisible}">-->
+							<Panel visible="true" id="idPanelTscaCertificateSearch" class="sapUiMediumMarginTop">
+								<smartTable:SmartTable id="idTscaCertificateSearchSmartTable" entitySet="TscaCertificatesSet" tableType="Table" useExportToExcel="false"
+									beforeExport="onBeforeExport" useVariantManagement="true" useTablePersonalisation="true" showRowCount="true"
+									persistencyKey="SmartTableAnalytical_Explored" beforeRebindTable="onBeforeRebindTscaCertTable" enableAutoBinding="false"
+									editTogglable="false" app:useSmartToggle="true">
+									<smartTable:customToolbar>
+										<OverflowToolbar design="Transparent" class="zEP_tableToolbar">
+											<SearchField id="searchFieldTscaCertificate" width="25%" tooltip="{i18n>tscaCertSearch}" placeholder="{i18n>tscaCertSearch}"
+												liveChange="onFilterTscaCertificate" class="zEP_normalSearch zEP_searchAlignment"/>
+											<Link text="{i18n>advanceSearch}" id="idadvanceSearchCert" press="handleAdvanceSearchlinkCert" tooltip="" class="zEP_advanceSearchText"></Link>
+											<core:Icon src="sap-icon://expand-group" id="idiconCert" press="handleAdvanceSearchlinkCert" class="zEP_advanceSearchIcon"></core:Icon>
+											<ToolbarSpacer/>
+											<Button id="idTscaGenerateButton" text="{i18n>generateTsca}" tooltip="{i18n>generateTsca}" enabled="true" press="onOpenTscaDetailsFragment"/>
+											<OverflowToolbarButton icon="sap-icon://synchronize" tooltip="{i18n>refresh}" press="onRefreshTscaCertificate" class="zEP_iconCircle"/>
+										</OverflowToolbar>
+									</smartTable:customToolbar>
+									<Panel visible="false" id="idTscaCertAdvancedSearchPanel" class="zEP_advanceSearchPanel">
+										<f:SimpleForm id="idDashboardFilterFormCert" editable="true" layout="ResponsiveGridLayout" title="" labelSpanM="4" emptySpanL="0"
+											emptySpanM="0" columnsL="2" columnsM="2" class="zEP_noTitleText">
+											<core:Title/>
+											<Label text="{i18n>createdOnFrom}"/>
+											<DatePicker id="idTscaCertCreatedonFrom" class="zEP_advSearchPanelInput" required="true" change="onFromDateSel" displayFormat="MM/dd/YYYY"
+												dateValue="{ path: 'view2>/dBackDate'}" valueFormat="YYYY-MM-dd"></DatePicker>
+											<Label text="{i18n>referenceNumber}"/>
+											<Input placeholder="{i18n>referenceNumber}" id="idTscaCertAdvSearchRefNumber" maxLength="40" valueHelpOnly="false" showValueHelp="false" valueHelpIconSrc="sap-icon://sys-cancel"
+												liveChange="onInput" valueHelpRequest="onClear" class="zEP_advSearchPanelInput"></Input>
+											<!--valueHelpRequest="onValueReference" submit="onValueReference"-->
+											<Label text="{i18n>referenceType}"/>
+											<Select forceSelection="false" selectedKey="" items="{/ZC_GTS_TSCA_REFTYPE}" width="60%" tooltip="{i18n>referenceType}"
+												id="idTscaCertAdvSearchRefType" enabled="true" class="zEP_customcombobox">
+												<core:Item key="{ref_key}" text="{text}"/>
+											</Select>
+											<core:Title/>
+											<Label text="{i18n>createdOnTo}"/>
+											<DatePicker id="idTscaCertCreatedonTo" displayFormat="MM/dd/YYYY" required="true" change="onToDateSel"
+												dateValue="{ path: 'view2>/dTodayDate'}" class="zEP_advSearchPanelInput" valueFormat="YYYY-MM-dd"></DatePicker>
+											<Label text="{i18n>applePartNumber}"/>
+											<Input placeholder="{i18n>applePartNumber}" id="idTscaCertAdvSearchRefPrdct" maxLength="40" valueHelpOnly="false" showValueHelp="false" valueHelpIconSrc="sap-icon://sys-cancel"
+												liveChange="onInput" valueHelpRequest="onClear" class="zEP_advSearchPanelInput"></Input>
+											<!--valueHelpRequest="onCertApplePart" submit="onCertApplePart"-->
+											<Label text="{i18n>supplierPartNumber}"/>
+											<Input placeholder="{i18n>supplierPartNumber}" id="idTscaCertAdvSearchSupplier" maxLength="40" valueHelpOnly="false" showValueHelp="false" valueHelpIconSrc="sap-icon://sys-cancel"
+												liveChange="onInput" valueHelpRequest="onClear" class="zEP_advSearchPanelInput"></Input>
+											<core:Title/>
+										</f:SimpleForm>
+										<HBox justifyContent="End">
+											<Button text="{i18n>search}" press="onTscaCertAdvancedSearch" class="sapUiSmallMarginEnd"/>
+											<Button text="{i18n>reset}" press="onTscaCertReset" class="sapUiSmallMarginEnd zEP_secondaryBtn"/>
+										</HBox>
+									</Panel>
+									<ui:Table id="idTscaCertificateSearchTable" visible="true" width="100%" threshold="100" selectionMode="Single" selectionBehavior="RowOnly"
+										showNoData="false" rowSelectionChange="onReferenceClick" enableBusyIndicator="true" busyIndicatorDelay="0"
+										class="zEP_maxScreen sapUiSmallMarginTop">
+										<!--rows="{path:'/TscaCertificatesSet'}"-->
+										<ui:columns width="auto">
+											<ui:Column hAlign="Left" width="13rem" filterProperty="Reference" sortProperty="Reference" id="idColumnTscaCertRef"
+												app:p13nData='\{"columnKey": "Reference", "columnIndex":"2","leadingProperty":"Reference", "additionalProperty":"Reference", "filterProperty": "Reference", "type" : "string","maxLength" : "40"}'>
+												<Label text="{i18n>referenceNumber}"/>
+												<ui:template>
+													<Text text="{Reference}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Right" width="8rem" filterProperty="Version" sortProperty="Version" id="idColumnTscaCertVersion"
+												app:p13nData='\{"columnKey": "Version", "columnIndex":"3","leadingProperty":"Version", "additionalProperty":"Version", "filterProperty": "Version", "type" : "string"}'>
+												<Label text="{i18n>version}"/>
+												<ui:template>
+													<Text text="{Version}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" id="idColumnTscaCertShipperName"
+												app:p13nData='\{"columnKey": "ShipperName", "columnIndex":"4","leadingProperty":"ShipperName", "additionalProperty":"ShipperName", "type" : "string"}'>
+												<Label text="{i18n>shipperName}"/>
+												<ui:template>
+													<Text text="{ShipperName}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" id="idColumnTscaCertExpCountryText" visible="false"
+												app:p13nData='\{"columnKey": "ExpCounText", "columnIndex":"10","leadingProperty":"ExpCounText", "additionalProperty":"ExpCounText", "type" : "string"}'>
+												<Label text="{i18n>countryOfExportText}"/>
+												<ui:template>
+													<Text text="{ExpCounText}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Center" width="10rem" filterProperty="CreatedOn" sortProperty="CreatedOn" id="idColumnTscaCertCreatedOn"
+												app:p13nData='\{"columnKey": "CreatedOn", "columnIndex":"6","leadingProperty":"CreatedOn", "additionalProperty":"CreatedOn", "filterProperty": "CreatedOn", "type" : "date" }'>
+												<Label text="{i18n>createdOn}"/>
+												<ui:template>
+													<!--<Text text="{path: 'CreatedOn',type: 'sap.ui.model.type.Date', formatOptions: { pattern: 'MM/dd/yyyy'}}"/>-->
+													<Text text="{ path: 'CreatedOn', formatter:'.displayFormat'}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="12rem" filterProperty="CreatedBy" sortProperty="CreatedBy" id="idColumnTscaCertCreatedBy"
+												app:p13nData='\{"columnKey": "CreatedBy", "columnIndex":"7","leadingProperty":"CreatedBy", "additionalProperty":"CreatedBy", "filterProperty": "CreatedBy", "type" : "string", "maxLength" : "25"}'>
+												<Label text="{i18n>createdBy}"/>
+												<ui:template>
+													<Text text="{CreatedBy}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="12rem" id="idColumnTscaCertificate"
+												app:p13nData='\{"columnKey": "tscaCertificate", "columnIndex":"8", "type" : "string", "leadingProperty":"CertificateId"}'>
+												<Label text="{i18n>tscaCertificate}"/>
+												<ui:template>
+													<Link text="View Certificate" press="onCertificateClick"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Center" width="20rem" visible="false" id="idColumnTscaCertCertificateId"
+												app:p13nData='\{"columnKey": "CertificateId", "columnIndex":"9","leadingProperty":"CertificateId", "additionalProperty":"CertificateId", "type" : "string"}'>
+												<Label text="{i18n>certificateId}"/>
+												<ui:template>
+													<Text text="{CertificateId}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="12rem" filterProperty="ExpCountry" sortProperty="ExpCountry" visible="true" id="idColumnTscaCertExpCountry"
+												app:p13nData='\{"columnKey": "ExpCountry", "columnIndex":"5","leadingProperty":"ExpCountry", "additionalProperty":"ExpCountry", "filterProperty": "ExpCountry", "type" : "string", "maxLength" : "3"}'>
+												<Label text="{i18n>countryOfExport}"/>
+												<ui:template>
+													<Text text="{ExpCountry}"/>
+												</ui:template>
+											</ui:Column>
+											<ui:Column hAlign="Left" width="13rem" filterProperty="RefType" sortProperty="RefType" id="idColumnTscaCertRefType"
+												app:p13nData='\{"columnKey": "RefType", "columnIndex":"1","leadingProperty":"RefType", "additionalProperty":"RefType", "filterProperty": "RefType", "type" : "string", "maxLength" : "2"}'>
+												<Label text="{i18n>referenceType}"/>
+												<ui:template>
+													<Text text="{RefType}"/>
+												</ui:template>
+											</ui:Column>
+										</ui:columns>
+									</ui:Table>
+								</smartTable:SmartTable>
+							</Panel>
+							<Panel id="idDetailPanel" visible="false" class="zEP_maxScreen sapUiSmallMarginTop sapUiSmallMarginBottom">
+								<ui:Table id="idTscaItemsTable" rows="{itemsData>/}" enableBusyIndicator="true" visibleRowCount="5" selectionMode="None">
+									<ui:columns>
+										<ui:Column hAlign="Left">
+											<Label text="{i18n>supplierPartNumber}"/>
+											<ui:template>
+												<Text text="{itemsData>Supplier}"/>
+											</ui:template>
+										</ui:Column>
+										<ui:Column hAlign="Left">
+											<Label text="{i18n>countryOfOrigin}"/>
+											<ui:template>
+												<Text text="{itemsData>CountryText}"/>
+											</ui:template>
+										</ui:Column>
+										<ui:Column hAlign="Left">
+											<Label text="{i18n>applePartNumber}"/>
+											<ui:template>
+												<Text text="{itemsData>Product}"/>
+											</ui:template>
+										</ui:Column>
+										<ui:Column hAlign="Left">
+											<Label text="{i18n>manufacturerNumber}"/>
+											<ui:template>
+												<Text text="{itemsData>Manufacturer}"/>
+											</ui:template>
+										</ui:Column>
+									</ui:columns>
+								</ui:Table>
+								<!--;;;-->
+							</Panel>
+						</IconTabFilter>
+					</items>
+				</IconTabBar>
+			</Panel>
+		</content>
+	</Page>
+</mvc:View>
