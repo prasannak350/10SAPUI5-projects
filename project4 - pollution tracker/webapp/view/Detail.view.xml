@@ -1,0 +1,47 @@
+<mvc:View controllerName="com.sap.project4.controller.Detail"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m" xmlns:f="sap.f">
+    <f:DynamicPage id="dynamicPage" toggleHeaderOnTitleClick="false">
+		<!-- DynamicPage Title -->
+		<f:title>
+			<f:DynamicPageTitle>
+				<f:heading>
+					<Title text="State Wise Pollution"/>
+				</f:heading>
+			</f:DynamicPageTitle>
+		</f:title>
+
+		<!-- DynamicPage Content -->
+		<f:content>
+			<VBox fitContainer="true">
+			 	<Table
+					id="statesPollutionTable"
+					inset="false"
+					items="{selectedStates>/}"
+					class="sapFDynamicPageAlignContent"
+					width="auto">
+					<columns>
+						<Column width="12em">
+							<Text text="State"/>
+						</Column>
+						<Column	hAlign="End">
+							<Text text="AQI"/>
+						</Column>
+					</columns>
+					<items>
+						<ColumnListItem type="Navigation" press="onStatePress">
+							<cells>
+								<ObjectIdentifier title="{selectedStates>name}" text="{selectedStates>AQI}"/>
+								<ObjectNumber
+									number="{selectedStates>AQI}"
+									/>
+							</cells>
+						</ColumnListItem>
+					</items>
+				</Table>
+			</VBox>
+		</f:content>
+
+		
+	</f:DynamicPage>
+</mvc:View>

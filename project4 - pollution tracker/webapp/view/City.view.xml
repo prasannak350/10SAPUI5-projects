@@ -1,0 +1,47 @@
+<mvc:View controllerName="com.sap.project4.controller.City"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m" xmlns:f="sap.f">
+    <f:DynamicPage id="citypage" toggleHeaderOnTitleClick="false">
+		<!-- DynamicPage Title -->
+		<f:title>
+			<f:DynamicPageTitle>
+				<f:heading>
+					<Title text="City Wise Pollution"/>
+				</f:heading>
+			</f:DynamicPageTitle>
+		</f:title>
+
+		<!-- DynamicPage Content -->
+		<f:content>
+			<VBox fitContainer="true">
+			 	<Table
+					id="cityPollutionTable"
+					inset="false"
+					items="{selectedCities>/}"
+					class="sapFDynamicPageAlignContent"
+					width="auto">
+					<columns>
+						<Column width="12em">
+							<Text text="City"/>
+						</Column>
+						<Column	hAlign="End">
+							<Text text="AQI"/>
+						</Column>
+					</columns>
+					<items>
+						<ColumnListItem type="Navigation">
+							<cells>
+								<ObjectIdentifier title="{selectedCities>name}" text="{selectedCities>AQI}"/>
+								<ObjectNumber
+									number="{selectedCities>AQI}"
+									/>
+							</cells>
+						</ColumnListItem>
+					</items>
+				</Table>
+			</VBox>
+		</f:content>
+
+		
+	</f:DynamicPage>
+</mvc:View>

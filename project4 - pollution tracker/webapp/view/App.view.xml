@@ -1,0 +1,17 @@
+<mvc:View controllerName="com.sap.project4.controller.App"
+  displayBlock="true"
+  height="100%"
+  xmlns="sap.f"
+  xmlns:mvc="sap.ui.core.mvc">
+
+  <!-- learnt something new about flexible coulumn layout -->
+  <!-- observe the manifest file routing for master detail page view and also the controlAggregation changed-->
+  <!-- also used sap.f library here. so in the manifest file "routerClass" will change to sap.f.routing.Router-->
+<FlexibleColumnLayout
+		id="pollution"
+		stateChange=".onStateChanged"
+		backgroundDesign="Solid"
+		layout="{/layout}"/>
+</mvc:View>
+
+<!-- "stateChange" event fires when there is a change in the layout property or in the maximum number of columns that can be displayed at once. -->

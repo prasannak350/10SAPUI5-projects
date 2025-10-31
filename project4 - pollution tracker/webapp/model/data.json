@@ -1,0 +1,94 @@
+[
+    {
+      "id": 1,
+      "name": "India",
+      "AQI": 200,
+      "states": [
+        {
+          "id": 101,
+          "name": "Maharashtra",
+          "AQI": 170,
+          "districts": [
+            { "id": 1001, "name": "Mumbai", "AQI": 210 },
+            { "id": 1002, "name": "Pune", "AQI": 160 },
+            { "id": 1003, "name": "Nagpur", "AQI": 140 },
+            { "id": 1004, "name": "Nashik", "AQI": 140 }
+          ]
+        },
+        {
+          "id": 102,
+          "name": "Gujarat",
+          "AQI": 210,
+          "districts": [
+            { "id": 1005, "name": "Ahmedabad", "AQI": 180 },
+            { "id": 1006, "name": "Surat", "AQI": 170 },
+            { "id": 1007, "name": "Vadodara" , "AQI": 150}
+          ]
+        },
+        {
+          "id": 103,
+          "name": "Karnataka",
+          "AQI": 160,
+          "districts": [
+            { "id": 1008, "name": "Bengaluru Urban", "AQI": 190 },
+            { "id": 1009, "name": "Mysuru", "AQI": 190 },
+            { "id": 1010, "name": "Mangaluru", "AQI": 170 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "United States",
+      "AQI": 190,
+      "states": [
+        {
+          "id": 201,
+          "name": "California",
+          "AQI": 150,
+          "districts": [
+            { "id": 2001, "name": "Los Angeles", "AQI": 140 },
+            { "id": 2002, "name": "San Francisco" , "AQI": 180},
+            { "id": 2003, "name": "San Diego", "AQI": 170 }
+          ]
+        },
+        {
+          "id": 202,
+          "name": "Texas",
+          "AQI": 190,
+          "districts": [
+            { "id": 2004, "name": "Houston", "AQI": 130 },
+            { "id": 2005, "name": "Dallas" , "AQI": 160},
+            { "id": 2006, "name": "Austin" , "AQI": 150}
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Australia",
+      "AQI": 180,
+      "states": [
+        {
+          "id": 301,
+          "name": "New South Wales",
+          "AQI": 220,
+          "districts": [
+            { "id": 3001, "name": "Sydney", "AQI": 190 },
+            { "id": 3002, "name": "Newcastle" , "AQI": 180},
+            { "id": 3003, "name": "Wollongong" , "AQI": 170}
+          ]
+        },
+        {
+          "id": 302,
+          "name": "Victoria",
+          "AQI": 230,
+          "districts": [
+            { "id": 3004, "name": "Melbourne", "AQI": 190 },
+            { "id": 3005, "name": "Geelong" , "AQI": 180},
+            { "id": 3006, "name": "Ballarat", "AQI": 170 }
+          ]
+        }
+      ]
+    }
+  ]
