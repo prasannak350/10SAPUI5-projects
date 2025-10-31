@@ -12,7 +12,17 @@ sap.ui.define([
         onPress: function(oRoute){
             // alert(oRoute + " " + "tile is pressed");
 
-            this.getOwnerComponent().getRouter().navTo(oRoute);
+            if(oRoute.substring(0,4) == 'EXT-'){
+                let selItem = JSON.parse(this.getView().getModel("tiles").getJSON()).find(item => {if (item.route == oRoute){ return item;}} );
+                // WE WILL SEE THE PROJECT 4 POLLUTION TRACKER WHEN WE CLICK ON 4TH TILE - learnt something new here
+                // when we click on the pollution tracker tile, we are running the pollution tracker app by giving the host url in tiles.json file. host url might change
+                sap.m.URLHelper.redirect(selItem.url);
+
+                // sap.m.URLHelper.triggerSms("+91123456789");
+                }
+            else {
+                this.getOwnerComponent().getRouter().navTo(oRoute);
+            }
         }
     });
 });

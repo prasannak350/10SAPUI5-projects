@@ -16,6 +16,18 @@ sap.ui.define([
             this.getView().setModel(myTilesModel,"timer");
             setInterval(this.calculateTime.bind(this),1000);
             // this.calculateTime();
+            
+            // for birthday timer
+            this.birthdayTimer ={
+                "days":0,
+                "hours":0,
+                "minutes":0,
+                "seconds":0
+            }
+            var myTilesModel = new JSONModel(this.birthdayTimer);
+            this.getView().setModel(myTilesModel,"birthdayTimer");
+            setInterval(this.calculateBirthdayTime.bind(this),1000);
+            
         },
         calculateTime: function(oRoute){
             var techedDate = new Date("Dec 8 2020");
@@ -26,6 +38,18 @@ sap.ui.define([
             this.timer.minutes = Math.floor((diff % ( 1000 * 60 * 60 ))/ ( 1000 * 60  ) );
             this.timer.seconds = Math.floor((diff % ( 1000 * 60  ))/ ( 1000  ) );
             this.getView().getModel("timer").setData(this.timer);
+        },
+
+        // tried it for birthday
+        calculateBirthdayTime: function(oRoute){
+            var BirthDate = new Date("July 19 1999");
+            var currentDate = new Date();
+            var diff = currentDate.getTime() - BirthDate.getTime(); // this gives the difference in milliseconds
+            this.birthdayTimer.days = Math.floor(diff / ( 1000 * 60 * 60 * 24 ));
+            this.birthdayTimer.hours = Math.floor((diff % ( 1000 * 60 * 60 * 24 )) / ( 1000 * 60 * 60 ));
+            this.birthdayTimer.minutes = Math.floor((diff % ( 1000 * 60 * 60 ))/ ( 1000 * 60  ) );
+            this.birthdayTimer.seconds = Math.floor((diff % ( 1000 * 60  ))/ ( 1000  ) );
+            this.getView().getModel("birthdayTimer").setData(this.birthdayTimer);
         }
     });
 });

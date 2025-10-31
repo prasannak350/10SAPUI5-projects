@@ -3,36 +3,87 @@
     xmlns="sap.m" xmlns:l="sap.ui.layout" xmlns:grid="sap.ui.layout.cssgrid" xmlns:core="sap.ui.core">
     <Page id="countdown" showHeader="false">
     <!-- learnt something new about cssgrid -->
-        <grid:CSSGrid id="grid1"
-			gridTemplateColumns="1fr"
-			gridGap="1rem">
-			<Image src="https://upload.wikimedia.org/wikipedia/commons/8/8f/SAP-Logo.svg"/>
-        </grid:CSSGrid>
-         <grid:CSSGrid id="grid2"
-			gridTemplateColumns="1fr 1fr 1fr 1fr"
-			gridGap="1rem">
-			<GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Days"  press="press">
-                <TileContent >
-                    <NumericContent value="{timer>/days}"  withMargin="false" valueColor="Critical" />
-                </TileContent>
-            </GenericTile>
+        <Panel expandable="true" expanded="true">
+            <headerToolbar>
+                <OverflowToolbar >
+                    <Title text="Timer from SAP Teched Event in 2020"></Title>
+                </OverflowToolbar>
+            </headerToolbar>
 
-            <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Hours"  press="press">
-                <TileContent >
-                    <NumericContent value="{timer>/hours}"  valueColor="Error" withMargin="false" />
-                </TileContent>
-            </GenericTile>
-            <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Minutes"  press="press">
-                <TileContent >
-                    <NumericContent value="{timer>/minutes}" valueColor="Good" withMargin="false" />
-                </TileContent>
-            </GenericTile>
+            <grid:CSSGrid id="grid1"
+                gridTemplateColumns="1fr"
+                gridGap="1rem">
+                <Image src="https://upload.wikimedia.org/wikipedia/commons/8/8f/SAP-Logo.svg"/>
+            </grid:CSSGrid>
+            <grid:CSSGrid id="grid2"
+                gridTemplateColumns="1fr 1fr 1fr 1fr"
+                gridGap="1rem">
+                <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Days"  press="press">
+                    <TileContent >
+                        <NumericContent value="{timer>/days}"  withMargin="false" valueColor="Critical" />
+                    </TileContent>
+                </GenericTile>
 
-            <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Seconds"  press="press">
-                <TileContent >
-                    <NumericContent value="{timer>/seconds}" withMargin="false" />
-                </TileContent>
-            </GenericTile>
-        </grid:CSSGrid>
+                <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Hours"  press="press">
+                    <TileContent >
+                        <NumericContent value="{timer>/hours}"  valueColor="Error" withMargin="false" />
+                    </TileContent>
+                </GenericTile>
+                <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Minutes"  press="press">
+                    <TileContent >
+                        <NumericContent value="{timer>/minutes}" valueColor="Good" withMargin="false" />
+                    </TileContent>
+                </GenericTile>
+
+                <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Seconds"  press="press">
+                    <TileContent >
+                        <NumericContent value="{timer>/seconds}" withMargin="false" />
+                    </TileContent>
+                </GenericTile>
+            </grid:CSSGrid>
+        </Panel>
+        
+        <Panel ></Panel>
+
+<!-- tried countdown timer from my first birthday -->
+        <Panel expandable="true" expanded="true">
+            <headerToolbar>
+                <OverflowToolbar >
+                    <Title text="Timer from my first Birthday"></Title>
+                </OverflowToolbar>
+            </headerToolbar>
+
+            <grid:CSSGrid id="birthday"
+                gridTemplateColumns="1fr"
+                gridGap="1rem">
+                <Image src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTTJnxoox1nqv6SY7lSL0j0TgsEb1oTQJ8EVLTsKXb_D6SsFKqKO-eY8gc&amp;s" width="20%"/>
+            </grid:CSSGrid>
+            <grid:CSSGrid id="birthdaygrid"
+                gridTemplateColumns="1fr 1fr 1fr 1fr"
+                gridGap="1rem">
+                <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Days"  press="press">
+                    <TileContent >
+                        <NumericContent value="{birthdayTimer>/days}"  withMargin="false" valueColor="Critical" />
+                    </TileContent>
+                </GenericTile>
+
+                <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Hours"  press="press">
+                    <TileContent >
+                        <NumericContent value="{birthdayTimer>/hours}"  valueColor="Error" withMargin="false" />
+                    </TileContent>
+                </GenericTile>
+                <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Minutes"  press="press">
+                    <TileContent >
+                        <NumericContent value="{birthdayTimer>/minutes}" valueColor="Good" withMargin="false" />
+                    </TileContent>
+                </GenericTile>
+
+                <GenericTile class="sapUiTinyMarginBegin sapUiTinyMarginTop tileLayout" header="Seconds"  press="press">
+                    <TileContent >
+                        <NumericContent value="{birthdayTimer>/seconds}" withMargin="false" />
+                    </TileContent>
+                </GenericTile>
+            </grid:CSSGrid>
+        </Panel>
     </Page>
 </mvc:View>

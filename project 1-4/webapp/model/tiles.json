@@ -10,5 +10,10 @@
     {
         "title": "Vaccination Tracker",
         "route": "third"
-    }
+    },
+    {
+    "title": "Pollution Tracker",
+    "route": "EXT-third",
+    "url":"https://port8084-workspaces-ws-e4dqg.us10.trial.applicationstudio.cloud.sap/index.html" 
+  }
 ]
