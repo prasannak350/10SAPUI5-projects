@@ -1,0 +1,17 @@
+<core:FragmentDefinition 
+    xmlns="sap.ui.comp.valuehelpdialog"
+    xmlns:core="sap.ui.core">
+
+    <ValueHelpDialog
+        id="UnitsRange"
+        title="Select Units In Stock"
+        supportMultiselect="false"
+        supportRanges="true"       
+        supportRangesOnly="true"
+        key="UnitsInStock"
+        ok="onUnitsRangeOk"
+        cancel="onUnitsRangeCancel"
+        afterClose="onUnitsRangeClose">
+    </ValueHelpDialog>
+
+</core:FragmentDefinition>

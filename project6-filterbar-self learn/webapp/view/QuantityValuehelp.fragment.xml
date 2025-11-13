@@ -1,0 +1,52 @@
+<core:FragmentDefinition xmlns="sap.ui.comp.valuehelpdialog"
+                         xmlns:core="sap.ui.core"
+                         xmlns:table="sap.ui.table"
+                         xmlns:m="sap.m">
+<!-- learnt somethig new - ValueHelpDialog ignores the table inside the fragment XML and does not bind the data correctly . so removed the table from the fragment file and added it dynamically in controller-->
+    <ValueHelpDialog
+        id="Quantity"
+        title="Select Quantity Per Unit"
+        supportMultiselect="true"
+        key="QuantityPerUnit"
+        ok="onQuantityOk"
+        cancel="onQuantityCancel"
+        afterClose="onQuantityClose">
+
+        <!-- <table:Table
+            id="QuantityTable"
+            rows="{/Products}"
+            selectionMode="MultiToggle">
+
+            <table:columns>
+                <table:Column>
+                    <table:label>
+                        <m:Label text="Product ID" />
+                    </table:label>
+                    <table:template>
+                        <m:Text text="{ProductID}" />
+                    </table:template>
+                </table:Column>
+
+                <table:Column>
+                    <table:label>
+                        <m:Label text="Product Name" />
+                    </table:label>
+                    <table:template>
+                        <m:Text text="{ProductName}" />
+                    </table:template>
+                </table:Column>
+
+                <table:Column>
+                    <table:label>
+                        <m:Label text="Quantity Per Unit" />
+                    </table:label>
+                    <table:template>
+                        <m:Text text="{QuantityPerUnit}" />
+                    </table:template>
+                </table:Column>
+            </table:columns>
+
+        </table:Table> -->
+
+    </ValueHelpDialog>
+</core:FragmentDefinition>

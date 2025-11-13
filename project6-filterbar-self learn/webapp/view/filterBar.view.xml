@@ -1,0 +1,133 @@
+<mvc:View xmlns:vk="sap.ui.vk" controllerName="com.sap.project6filterbar.controller.filterBar"
+    xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core"
+    xmlns="sap.m" xmlns:f="sap.f" xmlns:comp="sap.ui.comp.filterbar">
+    <!-- learnt something new about dymnaic page, filterbar -->
+    <f:DynamicPage>
+        <f:title>
+        <f:DynamicPageTitle>
+            <f:heading>
+            <Title text="Product Listing" />
+            </f:heading>
+        </f:DynamicPageTitle>
+        </f:title>
+
+        <f:header>
+        <f:DynamicPageHeader>
+            <comp:FilterBar
+            id="filterBar"
+            search="onSearch">
+            <comp:filterGroupItems>
+            <!-- MultiComboBox -->
+                <comp:FilterGroupItem name="ProductName" label="Product Name" groupName="Group1" visibleInFilterBar="true">
+                <comp:control>
+                    <!-- <Input id="prodNameInput" width="200px"/> -->
+                    <MultiComboBox id="productMultiCombo"
+                        items="{
+                            path: '/Products'
+                        }">
+                        <core:Item key="{ProductID}" text="{ProductName}" />
+                    </MultiComboBox>
+                </comp:control>
+                </comp:FilterGroupItem>
+
+            <!-- ComboBox -->
+                <comp:FilterGroupItem name="CategoryID" label="Category" groupName="Group1" visibleInFilterBar="true">
+                <comp:control>
+                    <ComboBox id="categoryCombo" items="{
+                    path: '/Categories'
+                    }">
+                    <core:Item key="{CategoryID}" text="{CategoryName}"/>
+                    </ComboBox>
+                </comp:control>
+                </comp:FilterGroupItem>
+
+            <!-- MultiInput with no value help -->
+                <comp:FilterGroupItem name="UnitsInStock" label="Units In Stock" groupName="Group1" visibleInFilterBar="true">
+                <comp:control>
+                    <MultiInput id="UnitsInStockMultiInput"
+                        width="300px"
+                        suggestionItems="{
+                            path: '/Products'
+                        }"
+                        showValueHelp="false">
+                        <core:Item key="{ProductID}" text="{UnitsInStock}" />
+                    </MultiInput> 
+                </comp:control>
+                </comp:FilterGroupItem>
+
+            <!-- MultiInput with value help -->
+                <comp:FilterGroupItem name="QuantityPerUnit" label="Quantity Per Unit" groupName="Group1" visibleInFilterBar="true">
+                <comp:control>
+                    <MultiInput id="QuantityPerUnitMultiInput"
+                        width="300px"
+                        showValueHelp="true"
+                        valueHelpRequest="onQuantityValueHelpRequest">
+                    </MultiInput> 
+                </comp:control>
+                </comp:FilterGroupItem>
+
+            <!-- MultiInput with value help and range-->
+                <!-- valueHelpOnly is set to true - user cannot type manually -->
+                <comp:FilterGroupItem name="UnitsRange" label="Units In Stock (Range)" groupName="Group1" visibleInFilterBar="true">
+                    <comp:control>
+                        <MultiInput 
+                            id="UnitsRangeMultiInput"
+                            showValueHelp="true"
+                            valueHelpOnly = "true"
+                            valueHelpRequest="onUnitsRangeValueHelp"
+                            width="250px"
+                        />
+                    </comp:control>
+                </comp:FilterGroupItem>
+
+            </comp:filterGroupItems>
+            </comp:FilterBar>
+        </f:DynamicPageHeader>
+        </f:header>
+
+        <f:content>
+        <Table id="productTable" items="{
+            path: '/Products'
+            }">
+            <headerToolbar>
+                <Toolbar>
+                    <Title text="Products" />
+                    <ToolbarSpacer/>
+                    <Button text="Clear Filters" press="onClearFilters" />
+                </Toolbar>
+            </headerToolbar>
+
+            <columns>
+            <Column><Text text="Name"/></Column>
+            <Column><Text text="Price"/></Column>
+            <Column><Text text="Quantity Per Unit"/></Column>
+            <Column><Text text="Units In Stock"/></Column>
+            </columns>
+
+            <items>
+            <ColumnListItem>
+                <cells>
+                <Text text="{ProductName}"/>
+                <Text text="{UnitPrice}"/>
+                <Text text="{QuantityPerUnit}"/>
+                <Text text="{UnitsInStock}"/>
+                </cells>
+            </ColumnListItem>
+            </items>
+
+        </Table>
+        </f:content>
+
+    </f:DynamicPage>
+</mvc:View>
+
+<!-- two things are not working in this view 
+    1) when you open the quantity per unit value help for the 2nd time, on the screen it displays only 10 records where as if we scroll, it displays all
+        if we give the visibleRowCount manually, then it displays all ( 17 rows which displays during the first time dialog open )
+
+    2)In Units in stock range value help, below issue is occuring
+
+        first I have selected range equal to 6 and range equal to 5 and I press on OK. now the dialog closes and =6, =5 tokens will appear on the multiinput. 
+        now in the multi input field, I remove =5 and I open the value help dialog again. now in the dialog it still shows =6 and =5. 
+        expected is it should show only =6 since =5 was already removed in the multi input
+-->
