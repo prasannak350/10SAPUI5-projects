@@ -1,0 +1,46 @@
+<mvc:View controllerName="com.sap.smartfilterbar.controller.smartFilterBar"
+    xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m"
+    xmlns:smartfilterbar="sap.ui.comp.smartfilterbar"
+    xmlns:smarttable="sap.ui.comp.smarttable">
+    <App >
+        <Page title="Smart Filter Bar with Smart Table">
+            <content>
+                <!-- learnt something new about smart filter bar and smart table -->
+                <smartfilterbar:SmartFilterBar
+                    id="smartFilterBar"
+                    entitySet="Customers">
+                    <smartfilterbar:controlConfiguration>
+                        <smartfilterbar:ControlConfiguration id="idCustomer" visibleInAdvancedArea="true" label="Customer ID" key="CustomerID" />
+                        <smartfilterbar:ControlConfiguration id="idCompany" visibleInAdvancedArea="true" label="Company Name" key="CompanyName" />
+                        <smartfilterbar:ControlConfiguration id="idCity" visibleInAdvancedArea="true" label="City" key="City" />
+                    </smartfilterbar:controlConfiguration>
+                </smartfilterbar:SmartFilterBar>
+
+                <!-- tableType can be given anything like - AnalyticalTable or ResponsiveTable or Table or TreeTable-->
+                <!-- <smarttable:SmartTable
+                    id="smartTable"
+                    smartFilterId="smartFilterBar"
+                    entitySet="Customers"
+                    enableAutoBinding="true"
+                    tableType="ResponsiveTable" 
+                    header="Customers">
+                    <Table id="idResponsiveTable" selectionChange="handleSelectionChange" mode="SingleSelectMaster"/>
+                </smarttable:SmartTable> -->
+
+                <!-- if we want to add columns, that should be always visible to the user - add initiallyVisibleFields property
+                    and if we give enableAutoBinding="true" data will also load at the starting itself-->
+                <!-- to make the connection between the SmartFilterBar and  SmartTable, we have to provide smartFilterId-->
+                <smarttable:SmartTable
+                    id="idsmartTable"
+                    smartFilterId="smartFilterBar"
+                    entitySet="Customers"
+                    enableAutoBinding="true"
+                    tableType="ResponsiveTable" 
+                    header="Customers"
+                    initiallyVisibleFields="CustomerID,CompanyName,City">
+                    <Table id="idResponsiveTable" selectionChange="handleSelectionChange" mode="SingleSelectMaster"/>
+                </smarttable:SmartTable>
+            </content>
+        </Page>
+    </App>
+</mvc:View>

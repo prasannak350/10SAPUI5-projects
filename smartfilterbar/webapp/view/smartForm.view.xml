@@ -1,0 +1,31 @@
+<mvc:View controllerName="com.sap.smartfilterbar.controller.smartForm"
+    xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m"
+    xmlns:smartform="sap.ui.comp.smartform" xmlns:smartfield="sap.ui.comp.smartfield">
+    <App >
+        <Page title="Smart Form" showNavButton="true" navButtonPress="onNavPress">
+            <content>
+            <!-- learnt something new about SmartForm-->
+                <smartform:SmartForm id="smartForm">
+                    <smartform:Group label="Customer">
+                        <smartform:GroupElement>
+                            <smartfield:SmartField textLabel="Customer ID" value="{CustomerID}"></smartfield:SmartField>
+                        </smartform:GroupElement>
+                        <smartform:GroupElement>
+                            <smartfield:SmartField textLabel="Contact Name" value="{ContactName}"></smartfield:SmartField>
+                        </smartform:GroupElement>
+                        <smartform:GroupElement>
+                            <smartfield:SmartField textLabel="Contact Title" value="{ContactTitle}"></smartfield:SmartField>
+                        </smartform:GroupElement>
+                        <smartform:GroupElement>
+                            <smartfield:SmartField textLabel="Address" value="{Address}"></smartfield:SmartField>
+                        </smartform:GroupElement>
+                        <smartform:GroupElement>
+                            <smartfield:SmartField textLabel="Phone" value="{Phone}"></smartfield:SmartField>
+                        </smartform:GroupElement>
+                    </smartform:Group>
+                </smartform:SmartForm>
+            </content>
+        </Page>
+    </App>
+   
+</mvc:View>
