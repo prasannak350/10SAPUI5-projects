@@ -130,43 +130,70 @@ sap.ui.define([
 
                 oView.addDependent(this._oQuantity);
 
-                
+                // Create table
+                this._oTable = new sap.ui.table.Table({
+                    // visibleRowCountMode: sap.ui.table.VisibleRowCountMode.Fixed,
+                    // visibleRowCount: 17,
+                    selectionMode: "MultiToggle",
+                    rows: "{/Products}"
+                });
+
+                this._oTable.addColumn(new sap.ui.table.Column({
+                    label: "Product ID",
+                    template: new sap.m.Text({ text: "{ProductID}" })
+                }));
+
+                this._oTable.addColumn(new sap.ui.table.Column({
+                    label: "Product Name",
+                    template: new sap.m.Text({ text: "{ProductName}" })
+                }));
+
+                this._oTable.addColumn(new sap.ui.table.Column({
+                    label: "Quantity Per Unit",
+                    template: new sap.m.Text({ text: "{QuantityPerUnit}" })
+                }));
+
+                this._oQuantity.attachAfterOpen(() => {
+                    sap.ui.core.BusyIndicator.hide();
+                });
+
+                // Always Set the table to the dialog
+                this._oQuantity.setTable(this._oTable);
+
+                // IMPORTANT: Pass the model manually
+                this._oQuantity.setModel(oView.getModel());
             }
-
-            // Create table
-            this._oTable = new sap.ui.table.Table({
-                // visibleRowCountMode: sap.ui.table.VisibleRowCountMode.Fixed,
-                // visibleRowCount: 17,
-                selectionMode: "MultiToggle",
-                rows: "{/Products}"
-            });
-
-            this._oTable.addColumn(new sap.ui.table.Column({
-                label: "Product ID",
-                template: new sap.m.Text({ text: "{ProductID}" })
-            }));
-
-            this._oTable.addColumn(new sap.ui.table.Column({
-                label: "Product Name",
-                template: new sap.m.Text({ text: "{ProductName}" })
-            }));
-
-            this._oTable.addColumn(new sap.ui.table.Column({
-                label: "Quantity Per Unit",
-                template: new sap.m.Text({ text: "{QuantityPerUnit}" })
-            }));
-
-            this._oQuantity.attachAfterOpen(() => {
-                sap.ui.core.BusyIndicator.hide();
-            });
-
-            // Always Set the table to the dialog
-            this._oQuantity.setTable(this._oTable);
-
-            // IMPORTANT: Pass the model manually
-            this._oQuantity.setModel(oView.getModel());
-
             sap.ui.core.BusyIndicator.hide();
+
+
+            const oTable = this._oTable;
+            const oMultiInput = this.byId("QuantityPerUnitMultiInput");
+            const aTokens = oMultiInput.getTokens();
+            // clear existing table selections
+            oTable.clearSelection();
+
+            // Clear existing tokens in the ValueHelpDialog token bar
+            this._oQuantity._oSelectedTokens.removeAllTokens();
+            // update the selected items token bar in the value help dialog
+            this._oQuantity.setTokens(aTokens);
+
+            // read tokens from multi Input and set the same in the table
+            // Wait until table rows are ready and then set
+            oTable.attachEventOnce("rowsUpdated", () => {
+                const aRows = oTable.getBinding().getContexts();
+
+                aTokens.forEach(token => {
+                    const tokenText = token.getText();
+
+                    aRows.forEach((ctx, index) => {
+                        const rowValue = ctx.getObject().QuantityPerUnit;
+
+                        if (rowValue === tokenText) {
+                            oTable.addSelectionInterval(index, index); // it selects that particular index row
+                        }
+                    });
+                });
+            });
 
             // open the fragment
             this._oQuantity.open();
@@ -174,7 +201,7 @@ sap.ui.define([
 
         // When user presses OK
         onQuantityOk: function (oEvent) {
-            var aTokens = oEvent.getParameter("tokens");
+            var aTokens = this._oQuantity._oSelectedTokens.getTokens();
             this.byId("QuantityPerUnitMultiInput").setTokens(aTokens);
             this._oQuantity.close();
         },
@@ -228,17 +255,17 @@ sap.ui.define([
                 );
                 oView.addDependent(this._oUnitsRange);
 
+                // learnt something new - to add ranges in the value help dialogue below code is required
+                this._oUnitsRange.setRangeKeyFields([{
+                    label: "Units In Stock",
+                    key: "UnitsInStock",
+                    type: "int"
+                }]);
+
             }
 
-            // learnt something new - to add ranges in the value help dialogue below code is required
-            this._oUnitsRange.setRangeKeyFields([{
-				label: "Units In Stock",
-				key: "UnitsInStock",
-				type: "int"
-			}]);
-
             // Reset internal tokens EVERY TIME
-            this._oUnitsRange.setTokens([]);  
+            this._oUnitsRange.setTokens([]);
 
             // Pre-fill existing tokens (if user previously selected ranges)
             this._oUnitsRange.setTokens(
