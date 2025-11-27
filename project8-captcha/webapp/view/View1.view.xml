@@ -1,0 +1,15 @@
+<!-- first have to load the control using xmlns:ca="com.sap.project8captcha.control" -->
+
+<mvc:View controllerName="com.sap.project8captcha.controller.View1"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:ca="com.sap.project8captcha.control">
+    <Page id="page" title="{i18n>title}">
+        <content>
+            <ca:Captcha
+            heading="Captcha Control" valid="onValid">
+            
+            </ca:Captcha>
+        </content>
+    </Page>
+</mvc:View>
