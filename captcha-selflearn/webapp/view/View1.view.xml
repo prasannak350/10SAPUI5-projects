@@ -1,0 +1,18 @@
+<mvc:View controllerName="com.sap.captchaselflearn.controller.View1"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m">
+    <Page id="page" title="{i18n>title}">
+        <VBox class="sapUiSmallMargin" width="300px">
+    
+            <Label id="captchaLabel" text="{/captcha}" design="Bold" />
+            
+            <HBox>
+            <Input id="captchaInput" placeholder="Enter captcha..." width="200px"/>
+            <Button icon="sap-icon://refresh" press="onRefreshCaptcha" tooltip="Refresh Captcha"/>
+            </HBox>
+
+            <Button text="Submit" press="onSubmitCaptcha" type="Accept" class="sapUiSmallMarginTop"/>
+
+        </VBox>
+    </Page>
+</mvc:View>
