@@ -1,0 +1,22 @@
+<mvc:View controllerName="com.sap.project10integrationcards.controller.View1"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m" xmlns:l="sap.ui.layout">
+    <Page id="page" title="{i18n>title}">
+        <content>
+        <VBox id="vbox" class="sapUiSmallMargin">
+         <Label labelFor="rbg3" text="Choose the Weather Forecast" />
+         <l:HorizontalLayout class="sapUiContentPadding">
+
+              <RadioButtonGroup id="rbg3" columns="5" valueState="Success" select="onSelectingWeatherOption" class="sapUiMediumMarginBottom">
+                <RadioButton id="Current" text="Current Object Card" />
+                <RadioButton id="Minutely" text="Hourly List Card" />
+                <RadioButton id="Hourly" text="Hourly Table Card" />
+                <RadioButton id="Daily" text="Hourly Analytical Card" />
+              </RadioButtonGroup>
+  
+
+            </l:HorizontalLayout>
+         </VBox>
+        </content>
+    </Page>
+</mvc:View>
